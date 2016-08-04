@@ -22,6 +22,7 @@ int main()
 		l1.computeActivations();
 		l2.computeWeightedSum(l1.getOutput());
 		l2.computeActivations();
+		timer.printDuration();
 	}
 
 	int x;

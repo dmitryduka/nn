@@ -43,12 +43,14 @@ namespace nn
 
 		void computeWeightedSum(const MatrixType& input) { m_z = m_weight * input + m_bias; }
 		void computeActivations() { m_a = m_z.unaryExpr(&activation<activationType>); }
+		void computeActivationDerivatives() { m_da = m_z.unaryExpr(&activation_derivative<activationType>); }
 
 		const MatrixType& getWeightedSum() const { return m_z; }
 		const MatrixType& getOutput() const { return m_a; }
 	private:
 		MatrixType m_z;
 		MatrixType m_a;
+		MatrixType m_da;
 		MatrixType m_weight;
 		MatrixType m_bias;
 	};
