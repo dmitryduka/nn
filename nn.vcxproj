@@ -162,6 +162,7 @@
     <ClInclude Include="include\cost.hpp" />
     <ClInclude Include="include\layer.hpp" />
     <ClInclude Include="include\settings.hpp" />
+    <ClInclude Include="include\timing.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
