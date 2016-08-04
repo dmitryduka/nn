@@ -33,9 +33,9 @@ namespace nn
 	real activation<ActivationType::kRelu>(real in) { return std::max(in, real(0.0)); }
 	template<>
 	real activation_derivative<ActivationType::kRelu>(real in) { return in > 0.0 ? 1.0 : 0.0; }
-	template<>
 
 	// tanh
+	template<>
 	real activation<ActivationType::kTanh>(real in) { return (1.0 - exp(-2.0 * in)) / (1.0 + exp(-2.0 * in)); }
 	template<>
 	real activation_derivative<ActivationType::kTanh>(real in)
