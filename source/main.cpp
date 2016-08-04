@@ -17,7 +17,7 @@ int main()
 		timing timer;
 		FirstLayer l1;
 		SecondLayer l2;
-		InputType in = InputType::Random(FirstLayer::UnitsInPreviousLayer, 1);
+		InputType in = InputType::Random(InputLayer::UnitsInLayer, 1);
 		l1.computeWeightedSum(InputLayer::computeActivations(in));
 		l1.computeActivations();
 		l2.computeWeightedSum(l1.getOutput());
