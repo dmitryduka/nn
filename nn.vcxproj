@@ -167,6 +167,7 @@
     <ClInclude Include="include\layer.hpp" />
     <ClInclude Include="include\settings.hpp" />
     <ClInclude Include="include\timing.hpp" />
+    <ClInclude Include="include\weight_initialization.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />

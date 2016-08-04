@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "settings.hpp"
+#include "weight_initialization.h"
 #include "activations.hpp"
 #if USE_EIGEN == 1
 #include <Eigen/Dense>
@@ -37,8 +38,9 @@ namespace nn
 
 		layer()
 		{
-			m_weight = MatrixType::Random(unitsInLayer, unitsInPreviousLayer);
-			m_bias = MatrixType::Random(unitsInLayer, 1);
+			// gaussian weight initialization
+			m_weight = MatrixType::Zero(unitsInLayer, unitsInPreviousLayer).unaryExpr(weight_initalization<WeightInitializationType::kGaussian>());
+			m_bias = MatrixType::Zero(unitsInLayer, 1).unaryExpr(weight_initalization<WeightInitializationType::kGaussian>());
 		}
 
 		void computeWeightedSum(const MatrixType& input) { m_z = m_weight * input + m_bias; }
