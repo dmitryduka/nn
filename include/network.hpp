@@ -74,10 +74,35 @@ namespace nn
 			MatrixType labelOneHot = MatrixType::Zero(outputLayer->UnitsInLayer(), 1);
 			labelOneHot(label, 0) = real(1.0);
 			// compute delta
-			const MatrixType delta = mse_derivative(outputLayer->getActivations(), labelOneHot).array() * outputLayer->getActivationDerivatives().array();
-			outputLayer->getNablaB() = delta;
-			//outputLayer->getNablaW() = delta.dot(m_layers[m_layers.size() - 2]->getActivations().transpose());
+			MatrixType delta = mse_derivative(outputLayer->getActivations(), labelOneHot).array() * outputLayer->getActivationDerivatives().array();
+			outputLayer->getNablaB() += delta;
+			outputLayer->getNablaW() += delta * m_layers[m_layers.size() - 2]->getActivations().transpose();
+
+			for (size_t i = m_layers.size() - 2; i > 0; --i)
+			{
+				const auto& nextLayer = m_layers[i + 1];
+				const auto& layer = m_layers[i];
+				const auto& prevLayer = m_layers[i - 1];
+				auto w = nextLayer->getWeights().transpose();
+				delta = (w * delta);
+				delta = delta.array() * layer->getActivationDerivatives().array();
+				layer->getNablaB() += delta;
+				layer->getNablaW() += delta * prevLayer->getActivations().transpose();
+			}
 		}
+
+		void update_weights(real eta, uint32_t batch_size)
+		{
+			for (size_t i = m_layers.size() - 1; i > 0; --i)
+			{
+				const auto& layer = m_layers[i];
+				layer->getWeights() -= (eta / real(batch_size)) * layer->getNablaW();
+				layer->getBias() -= (eta / real(batch_size)) * layer->getNablaB();
+				layer->getNablaW().setConstant(0.0);
+				layer->getNablaB().setConstant(0.0);
+			}
+		}
+
 	private:
 		std::vector<std::shared_ptr<layerBase>> m_layers;
 	};

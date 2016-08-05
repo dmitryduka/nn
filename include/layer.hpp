@@ -33,12 +33,17 @@ namespace nn
 		virtual void computeWeightedSum(const MatrixType& input) = 0;
 		virtual void computeActivations(const MatrixType& input) = 0;
 		virtual void computeActivationDerivatives(const MatrixType& input) = 0;
+
 		const MatrixType& getWeightedSum() const { return m_z; }
-		const MatrixType& getActivations() const { return m_a; }
-		const MatrixType& getActivationDerivatives() const { return m_da; }
-		virtual MatrixType& getNablaB() { }
-		virtual MatrixType& getNablaW() { }
+		virtual const MatrixType& getActivations() const { return m_a; }
+		virtual const MatrixType& getActivationDerivatives() const { return m_da; }
+
+		virtual MatrixType& getWeights() { return m_dummy; }
+		virtual MatrixType& getBias() { return m_dummy; }
+		virtual MatrixType& getNablaB() { return m_dummy; }
+		virtual MatrixType& getNablaW() { return m_dummy; }
 	protected:
+		MatrixType m_dummy;
 		MatrixType m_a;
 		MatrixType m_z;
 		MatrixType m_da;
@@ -72,12 +77,16 @@ namespace nn
 		void initializeWeights()
 		{
 			m_weight = MatrixType::Zero(UnitsInLayer(), UnitsInPreviousLayer()).unaryExpr(weight_initalization<weightInitializationType>());
+			m_nabla_w = MatrixType::Zero(UnitsInLayer(), UnitsInPreviousLayer());
 			m_bias = MatrixType::Zero(UnitsInLayer(), 1).unaryExpr(weight_initalization<weightInitializationType>());
+			m_nabla_b = MatrixType::Zero(UnitsInLayer(), 1);
 		}
 
 		void computeWeightedSum(const MatrixType& input) { m_z = m_weight * input + m_bias; }
 		void computeActivations(const MatrixType& input) { m_a = input.unaryExpr(m_activation); }
 		void computeActivationDerivatives(const MatrixType& input) { m_da = input.unaryExpr(m_activationDerivative); }
+		MatrixType& getWeights() { return m_weight; }
+		MatrixType& getBias() { return m_bias; }
 		MatrixType& getNablaB() { return m_nabla_b; }
 		MatrixType& getNablaW() { return m_nabla_w; }
 		uint32_t UnitsInPreviousLayer() const { return m_unitsInPreviousLayer; }
