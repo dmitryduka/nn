@@ -48,4 +48,17 @@ namespace nn
 			return nd(rng);
 		}
 	};
+
+	template<>
+	struct weight_initalization<WeightInitializationType::kZeros> { real operator()(real) const { return real(0.0); } };
+	template<>
+	struct weight_initalization<WeightInitializationType::kSequentialDebug>
+	{
+		real operator()(real) const 
+		{ 
+			return real(m_index++);
+		} 
+	private:
+		mutable size_t m_index = 0;
+	};
 }
