@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include "mnist.hpp"
 #include "network.hpp"
 
 int main()
@@ -11,9 +11,10 @@ int main()
 		net.addRegularLayer<ActivationType::kSigmoid, WeightInitializationType::kGaussian>(30);
 		net.addRegularLayer<ActivationType::kSigmoid, WeightInitializationType::kGaussian>(10);
 
-		using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
-		const MatrixType input = MatrixType::Random(28 * 28, 1);
-		const MatrixType output = net.feedforward(input);
+		auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte");
+		auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte");
+		auto correct = net.evaluate(images, labels);
+		std::cout << "Correct: " << correct << std::endl;
 	}
 
 	return 0;

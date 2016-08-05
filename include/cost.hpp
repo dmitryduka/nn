@@ -1,18 +1,18 @@
 #pragma once
-
 #include "settings.hpp"
+#if USE_EIGEN == 1
+#include <Eigen/Dense>
+#endif
 
 namespace nn
 {
-	template<typename T>
-	real mse(const T& y, const T& z)
+#if USE_EIGEN == 1
+	using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
+	real mse(const MatrixType& output, const MatrixType& truth)
 	{
-		real cost = 0.0;
-		for (int i = 0; i < x.size(); ++i)
-		{
-			auto d = x - y;
-			cost += d * d;
-		}
-		return cost;
+		if (output.rows() != truth.rows() || output.cols() != truth.cols())
+			throw std::logic_error("Cost functions require equally sized matrices");
+		return real((truth - output).squaredNorm());
 	}
+#endif
 }

@@ -41,5 +41,8 @@
     <ClInclude Include="include\network.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\mnist.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
