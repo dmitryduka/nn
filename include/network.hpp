@@ -38,7 +38,6 @@ namespace nn
 
 		layerBase::MatrixType feedforward(const layerBase::MatrixType& input)
 		{
-			m_layers[0]->computeWeightedSum(input);
 			m_layers[0]->computeActivations(input);
 			for (size_t i = 1; i < m_layers.size(); ++i)
 			{
@@ -66,6 +65,18 @@ namespace nn
 				correct += idx == labels[i];
 			}
 			return real(correct) / real(inputs.size());
+		}
+
+		void backprop(uint8_t label)
+		{
+			// make one-hot label out of single uint8_t
+			const auto& outputLayer = m_layers.back();
+			MatrixType labelOneHot = MatrixType::Zero(outputLayer->UnitsInLayer(), 1);
+			labelOneHot(label, 0) = real(1.0);
+			// compute delta
+			const MatrixType delta = mse_derivative(outputLayer->getActivations(), labelOneHot).array() * outputLayer->getActivationDerivatives().array();
+			outputLayer->getNablaB() = delta;
+			//outputLayer->getNablaW() = delta.dot(m_layers[m_layers.size() - 2]->getActivations().transpose());
 		}
 	private:
 		std::vector<std::shared_ptr<layerBase>> m_layers;

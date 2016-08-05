@@ -31,11 +31,13 @@ namespace nn
 		}
 
 		virtual void computeWeightedSum(const MatrixType& input) = 0;
-		virtual void computeActivations(const MatrixType& input) { m_a = input.unaryExpr(m_activation); }
-		virtual void computeActivationDerivatives(const MatrixType& input) { m_da = input.unaryExpr(m_activationDerivative); }
+		virtual void computeActivations(const MatrixType& input) = 0;
+		virtual void computeActivationDerivatives(const MatrixType& input) = 0;
 		const MatrixType& getWeightedSum() const { return m_z; }
 		const MatrixType& getActivations() const { return m_a; }
 		const MatrixType& getActivationDerivatives() const { return m_da; }
+		virtual MatrixType& getNablaB() { }
+		virtual MatrixType& getNablaW() { }
 	protected:
 		MatrixType m_a;
 		MatrixType m_z;
@@ -53,7 +55,9 @@ namespace nn
 	{
 	public:
 		layer(uint32_t unitsInLayer) : layerBase(unitsInLayer) {}
-		void computeWeightedSum(const MatrixType& input) { m_z = input; }
+		void computeWeightedSum(const MatrixType& input) { }
+		void computeActivations(const MatrixType& input) { m_a = input; }
+		void computeActivationDerivatives(const MatrixType& input) { }
 	};
 
 	template<>
@@ -72,11 +76,15 @@ namespace nn
 		}
 
 		void computeWeightedSum(const MatrixType& input) { m_z = m_weight * input + m_bias; }
-
+		void computeActivations(const MatrixType& input) { m_a = input.unaryExpr(m_activation); }
+		void computeActivationDerivatives(const MatrixType& input) { m_da = input.unaryExpr(m_activationDerivative); }
+		MatrixType& getNablaB() { return m_nabla_b; }
+		MatrixType& getNablaW() { return m_nabla_w; }
 		uint32_t UnitsInPreviousLayer() const { return m_unitsInPreviousLayer; }
 	private:
 		uint32_t m_unitsInPreviousLayer;
-
+		MatrixType m_nabla_b;
+		MatrixType m_nabla_w;
 		MatrixType m_weight;
 		MatrixType m_bias;
 	};
