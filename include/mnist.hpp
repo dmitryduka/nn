@@ -35,9 +35,9 @@ namespace nn
 			imageHeight = *reinterpret_cast<uint32_t*>(images.data() + 12);
 			std::vector<MatrixType> result;
 			size_t position = 16;
+			const auto vectorizedSize = imageWidth * imageHeight;
 			for (uint32_t i = 0u; i < datasetSize; ++i)
 			{
-				const auto vectorizedSize = imageWidth * imageHeight;
 				MatrixType image(vectorizedSize, 1);
 					for (size_t j = 0; j < vectorizedSize; ++j)
 						image(j, 0) = real(images[position++]);

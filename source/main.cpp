@@ -12,11 +12,11 @@ int main()
 		constexpr ActivationType type = ActivationType::kSigmoid;
 
 		net.addInputLayer<type>(28 * 28);
-		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(30);
+		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
 		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 
-		auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte");
-		auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte");
+		auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", 10000);
+		auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte", 10000);
 		const size_t epochs = 30;
 		const size_t batch_size = 10;
 		const size_t test_set_size = 10000; // saves time to evaluate only a part of the set		
@@ -29,12 +29,13 @@ int main()
 			{
 				for (size_t i = k * batch_size; i < (k + 1) * batch_size; ++i)
 				{
-					auto correct = net.feedforward(images[i]);
+					net.feedforward(images[i]);
 					net.backprop(labels[i]);
 				}
 				net.update_weights(eta, batch_size);
 			}
 			real correct = net.evaluate(images, labels, test_set_size);
+			// learning rate slow down at peak accuracy
 			if (correct > 0.96) eta = 1.0f;
 			if (correct > 0.97) eta = 0.5f;
 			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "%" << std::endl;
