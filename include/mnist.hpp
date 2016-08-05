@@ -19,8 +19,6 @@ namespace nn
 			in.seekg(0, in.beg);
 			std::vector<unsigned char> images(fileLen);
 			in.read(reinterpret_cast<char*>(images.data()), images.size());
-			if (images.size() < 16 + 28 * 28)
-				throw std::runtime_error("No images in the dataset");
 			for (size_t i = 0; i < 16; i += 4)
 			{
 				std::swap(images[i], images[i + 3]);
@@ -62,8 +60,6 @@ namespace nn
 			in.seekg(0, in.beg);
 			std::vector<unsigned char> images(fileLen);
 			in.read(reinterpret_cast<char*>(images.data()), images.size());
-			if (images.size() < 16 + 28 * 28)
-				throw std::runtime_error("No images in the dataset");
 			for (size_t i = 0; i < 8; i += 4)
 			{
 				std::swap(images[i], images[i + 3]);
