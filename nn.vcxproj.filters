@@ -35,7 +35,7 @@
     <ClInclude Include="include\timing.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\weight_initialization.h">
+    <ClInclude Include="include\weight_initialization.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

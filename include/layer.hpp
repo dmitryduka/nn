@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "settings.hpp"
-#include "weight_initialization.h"
+#include "weight_initialization.hpp"
 #include "activations.hpp"
 #if USE_EIGEN == 1
 #include <Eigen/Dense>
@@ -15,12 +15,15 @@ namespace nn
 		kEigenRegular
 	};
 
-	template<LayerType type, ActivationType activationType, uint32_t unitsInLayer, uint32_t unitsInPreviousLayer = 1>
+	template<LayerType type, 
+		ActivationType activationType, 
+		WeightInitializationType weightInitializationType, 
+		uint32_t unitsInLayer, uint32_t unitsInPreviousLayer = 1>
 	class layer { };
 
 #if USE_EIGEN == 1
-	template<ActivationType activationType, uint32_t unitsInLayer>
-	class layer<LayerType::kEigenInput, activationType, unitsInLayer, 1>
+	template<ActivationType activationType, WeightInitializationType weightInitializationType, uint32_t unitsInLayer>
+	class layer<LayerType::kEigenInput, activationType, weightInitializationType, unitsInLayer, 1>
 	{
 	public:
 		using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
@@ -28,8 +31,8 @@ namespace nn
 		static MatrixType computeActivations(const MatrixType& output) { return output.unaryExpr(&activation<activationType>); }
 	};
 
-	template<ActivationType activationType, uint32_t unitsInLayer, uint32_t unitsInPreviousLayer>
-	class layer<LayerType::kEigenRegular, activationType, unitsInLayer, unitsInPreviousLayer>
+	template<ActivationType activationType, WeightInitializationType weightInitializationType, uint32_t unitsInLayer, uint32_t unitsInPreviousLayer>
+	class layer<LayerType::kEigenRegular, activationType, weightInitializationType, unitsInLayer, unitsInPreviousLayer>
 	{
 	public:
 		using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
@@ -39,8 +42,8 @@ namespace nn
 		layer()
 		{
 			// gaussian weight initialization
-			m_weight = MatrixType::Zero(unitsInLayer, unitsInPreviousLayer).unaryExpr(weight_initalization<WeightInitializationType::kGaussian>());
-			m_bias = MatrixType::Zero(unitsInLayer, 1).unaryExpr(weight_initalization<WeightInitializationType::kGaussian>());
+			m_weight = MatrixType::Zero(unitsInLayer, unitsInPreviousLayer).unaryExpr(weight_initalization<weightInitializationType>());
+			m_bias = MatrixType::Zero(unitsInLayer, 1).unaryExpr(weight_initalization<weightInitializationType>());
 		}
 
 		void computeWeightedSum(const MatrixType& input) { m_z = m_weight * input + m_bias; }
