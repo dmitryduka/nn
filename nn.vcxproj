@@ -165,6 +165,7 @@
     <ClInclude Include="include\activations.hpp" />
     <ClInclude Include="include\cost.hpp" />
     <ClInclude Include="include\layer.hpp" />
+    <ClInclude Include="include\network.hpp" />
     <ClInclude Include="include\settings.hpp" />
     <ClInclude Include="include\timing.hpp" />
     <ClInclude Include="include\weight_initialization.hpp" />

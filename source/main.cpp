@@ -1,30 +1,20 @@
 #include <iostream>
-#include "cost.hpp"
-#include "layer.hpp"
-#include "activations.hpp"
+
+#include "network.hpp"
 
 int main()
 {
 	{
 		using namespace nn;
-		using InputLayer = layer<LayerType::kEigenInput, ActivationType::kSigmoid, WeightInitializationType::kGaussian, 784>;
-		using FirstLayer = layer<LayerType::kEigenRegular, ActivationType::kSigmoid, WeightInitializationType::kGaussian, 30, 784>;
-		using SecondLayer = layer<LayerType::kEigenRegular, ActivationType::kSigmoid, WeightInitializationType::kGaussian, 10, 30>;
-		using InputType = InputLayer::MatrixType;
+		network net;
+		net.addInputLayer<ActivationType::kSigmoid>(28 * 28);
+		net.addRegularLayer<ActivationType::kSigmoid>(30);
+		net.addRegularLayer<ActivationType::kSigmoid>(10);
 
-		FirstLayer l1;
-		SecondLayer l2;
-		for (int i = 0; i < 500; ++i)
-		{
-			InputType in = InputType::Random(InputLayer::UnitsInLayer, 1);
-			l1.computeWeightedSum(InputLayer::computeActivations(in));
-			l1.computeActivations();
-			l2.computeWeightedSum(l1.getOutput());
-			l2.computeActivations();
-		}
+		using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
+		const MatrixType input = MatrixType::Random(28 * 28, 1);
+		const MatrixType output = net.feedforward(input);
 	}
 
-	int x;
-	std::cin >> x;
 	return 0;
 }

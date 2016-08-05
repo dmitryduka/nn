@@ -6,9 +6,11 @@ namespace nn
 {
 	enum class WeightInitializationType
 	{
+		kZeros,
 		kGaussian,
 		kWeightedGaussian,
-		kUniform
+		kUniform,
+		kSequentialDebug
 	};
 
 	template<WeightInitializationType type> struct weight_initalization {};

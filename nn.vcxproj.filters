@@ -38,5 +38,8 @@
     <ClInclude Include="include\weight_initialization.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\network.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

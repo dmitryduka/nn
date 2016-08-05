@@ -15,6 +15,8 @@ namespace nn
 		kTanh
 	};
 
+	using ActivationFunction = real(*)(real);
+
 	template<ActivationType t> real activation(real in);
 	template<ActivationType t> real activation_derivative(real in);
 
