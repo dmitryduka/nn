@@ -52,7 +52,6 @@ namespace nn
 			throw std::runtime_error("Can't open MNIST images dataset");
 	}
 
-	using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
 	std::vector<uint8_t> loadMNISTLabels(const std::string& filename, uint32_t maxLabels = 0xFFFFFFFF)
 	{
 		std::ifstream in(filename, std::ifstream::binary);
