@@ -49,14 +49,15 @@ namespace nn
 			return m_layers[m_layers.size() - 1]->getActivations();
 		}
 
-		real evaluate(const std::vector<MatrixType>& inputs, const std::vector<uint8_t>& labels)
+		real evaluate(const std::vector<MatrixType>& inputs, const std::vector<uint8_t>& labels, size_t count = 0)
 		{
 			if (inputs.size() != labels.size())
 				throw std::logic_error("Inputs and labels should be of the same size");
 
 			size_t correct = 0;
 			std::vector<uint8_t> outputs;
-			for (size_t i = 0; i < inputs.size(); ++i)
+			const auto range = count != 0 ? count : inputs.size();
+			for (size_t i = 0; i < range; ++i)
 			{
 				const auto output = feedforward(inputs[i]);
 				uint8_t idx = 0;
@@ -64,7 +65,7 @@ namespace nn
 				outputs.push_back(idx);
 				correct += idx == labels[i];
 			}
-			return real(correct) / real(inputs.size());
+			return real(correct) / real(count);
 		}
 
 		void backprop(uint8_t label)
