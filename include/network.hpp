@@ -65,15 +65,16 @@ namespace nn
 				outputs.push_back(idx);
 				correct += idx == labels[i];
 			}
-			return real(correct) / real(count);
+			return real(correct) / real(range);
 		}
 
-		void backprop(uint8_t label)
+		void backprop(const std::vector<uint8_t>& label_batch)
 		{
 			// make one-hot label out of single uint8_t
 			const auto& outputLayer = m_layers.back();
-			MatrixType labelOneHot = MatrixType::Zero(outputLayer->UnitsInLayer(), 1);
-			labelOneHot(label, 0) = real(1.0);
+			MatrixType labelOneHot = MatrixType::Zero(outputLayer->UnitsInLayer(), outputLayer->getActivations().cols());
+			for (int i = 0; i < labelOneHot.cols(); ++i)
+				labelOneHot(label_batch[i], i) = real(1.0);
 			// compute delta
 			MatrixType delta = mse_derivative(outputLayer->getActivations(), labelOneHot).array() * outputLayer->getActivationDerivatives().array();
 			outputLayer->getNablaB() += delta;
@@ -98,7 +99,8 @@ namespace nn
 			{
 				const auto& layer = m_layers[i];
 				layer->getWeights() -= (eta / real(batch_size)) * layer->getNablaW();
-				layer->getBias() -= (eta / real(batch_size)) * layer->getNablaB();
+				for (int i = 0; i < layer->getNablaB().cols(); ++i)
+					layer->getBias() -= (eta / real(batch_size)) * layer->getNablaB().col(i);
 				layer->getNablaW().setConstant(0.0);
 				layer->getNablaB().setConstant(0.0);
 			}

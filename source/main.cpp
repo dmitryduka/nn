@@ -14,27 +14,43 @@ int main()
 		net.addInputLayer<type>(28 * 28);
 		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
 		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
-
-		auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", 10000);
-		auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte", 10000);
+		
+		std::vector<MatrixType> training_set, validation_set;
+		std::vector<uint8_t> training_labels, validation_labels;
+		const size_t dataset_size = 60000;
+		{
+			const auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", dataset_size);
+			const auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte", dataset_size);
+			training_set = std::vector<MatrixType>(images.cbegin(), images.cbegin() + images.size() / 2);
+			validation_set = std::vector<MatrixType>(images.cbegin() + images.size() / 2, images.cend());
+			training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + labels.size() / 2);
+			validation_labels = std::vector<uint8_t>(labels.cbegin() + labels.size() / 2, labels.cend());
+		}
 		const size_t epochs = 30;
 		const size_t batch_size = 10;
-		const size_t test_set_size = 10000; // saves time to evaluate only a part of the set		
+		const size_t test_set_size = dataset_size; // saves time to evaluate only a part of the set		
 		real eta = 2.0f;
 		// SGD
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
-			const size_t batches = images.size() / batch_size;
+			const size_t batches = training_set.size() / batch_size;
+			MatrixType image_batch = MatrixType::Zero(28 * 28, batch_size);
+			std::vector<uint8_t> label_batch(batch_size);
 			for (size_t k = 0u; k < batches; k++)
 			{
-				for (size_t i = k * batch_size; i < (k + 1) * batch_size; ++i)
+				const size_t batch_start = k * batch_size;
+				const size_t batch_end = (k + 1) * batch_size;
+
+				for (size_t i = batch_start; i < batch_end; ++i)
 				{
-					net.feedforward(images[i]);
-					net.backprop(labels[i]);
+					image_batch.col(i - batch_start) = training_set[i];
+					label_batch[i - batch_start] = training_labels[i];
 				}
+				net.feedforward(image_batch);
+				net.backprop(label_batch);
 				net.update_weights(eta, batch_size);
 			}
-			real correct = net.evaluate(images, labels, test_set_size);
+			real correct = net.evaluate(validation_set, validation_labels);
 			// learning rate slow down at peak accuracy
 			if (correct > 0.96) eta = 1.0f;
 			if (correct > 0.97) eta = 0.5f;

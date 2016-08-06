@@ -88,10 +88,15 @@ namespace nn
 			m_weight = MatrixType::Zero(UnitsInLayer(), UnitsInPreviousLayer()).unaryExpr(weight_initalization<WeightInitializationType::kWeightedGaussian>(UnitsInLayer()));
 			m_nabla_w = MatrixType::Zero(UnitsInLayer(), UnitsInPreviousLayer());
 			m_bias = MatrixType::Zero(UnitsInLayer(), 1).unaryExpr(weight_initalization<WeightInitializationType::kWeightedGaussian>(UnitsInLayer()));
-			m_nabla_b = MatrixType::Zero(UnitsInLayer(), 1);
+			m_nabla_b = MatrixType::Zero(UnitsInLayer(), 10);
 		}
 
-		void computeWeightedSum(const MatrixType& input) { m_z = m_weight * input + m_bias; }
+		void computeWeightedSum(const MatrixType& input) 
+		{
+			m_z = m_weight * input;
+			for (int i = 0; i < m_z.cols(); ++i)
+				m_z.col(i) += m_bias;
+		}
 		void computeActivations(const MatrixType& input) { m_a = input.unaryExpr(m_activation); }
 		void computeActivationDerivatives(const MatrixType& input) { m_da = input.unaryExpr(m_activationDerivative); }
 		MatrixType& getWeights() { return m_weight; }
