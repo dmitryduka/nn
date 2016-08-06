@@ -51,13 +51,13 @@ namespace nn
 
 		void computeWeightedSum(const MatrixType& input) 
 		{
-			m_z = m_weight * input;
+			m_z.noalias() = m_weight * input;
 			for (int i = 0; i < m_z.cols(); ++i)
-				m_z.col(i) += m_bias;
+				m_z.col(i).noalias() += m_bias;
 		}
-		void setActivations(const MatrixType& input) { m_a = input; }
-		void computeActivations(const MatrixType& input) { m_a = input.unaryExpr(m_activation); }
-		void computeActivationDerivatives(const MatrixType& input) { m_da = input.unaryExpr(m_activationDerivative); }
+		void setActivations(const MatrixType& input) { m_a.noalias() = input; }
+		void computeActivations(const MatrixType& input) { m_a.noalias() = input.unaryExpr(m_activation); }
+		void computeActivationDerivatives(const MatrixType& input) { m_da.noalias() = input.unaryExpr(m_activationDerivative); }
 
 		const MatrixType& getWeightedSum() const { return m_z; }
 		const MatrixType& getActivations() const { return m_a; }
