@@ -21,14 +21,13 @@ int main()
 		{
 			const auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", dataset_size);
 			const auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte", dataset_size);
-			training_set = std::vector<MatrixType>(images.cbegin(), images.cbegin() + images.size() / 2);
-			validation_set = std::vector<MatrixType>(images.cbegin() + images.size() / 2, images.cend());
-			training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + labels.size() / 2);
-			validation_labels = std::vector<uint8_t>(labels.cbegin() + labels.size() / 2, labels.cend());
+			training_set = std::vector<MatrixType>(images.cbegin(), images.cbegin() + 50000);
+			validation_set = std::vector<MatrixType>(images.cbegin() + 50000, images.cend());
+			training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + 50000);
+			validation_labels = std::vector<uint8_t>(labels.cbegin() + 50000, labels.cend());
 		}
 		const size_t epochs = 30;
 		const size_t batch_size = 10;
-		const size_t test_set_size = dataset_size; // saves time to evaluate only a part of the set		
 		real eta = 2.0f;
 		// SGD
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
