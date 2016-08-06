@@ -12,7 +12,7 @@ int main()
 		network net;
 		constexpr ActivationType type = ActivationType::kSigmoid;
 
-		net.addInputLayer<type>(28 * 28);
+		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(28 * 28);
 		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
 		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 		

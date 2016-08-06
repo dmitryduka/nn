@@ -10,35 +10,27 @@ namespace nn
 	class network
 	{
 	public:
-		template<ActivationType activationType>
-		std::shared_ptr<layerBase> addInputLayer(uint32_t units)
-		{
-			if (!m_layers.empty())
-				throw std::logic_error("Only one input layer supported");
-			auto curLayer = std::make_shared<layer<LayerType::kEigenInput>>(units);
-			curLayer->setActivationType<activationType>();
-			m_layers.push_back(curLayer);
-			return curLayer;
-		}
+		using Layer = layer<LayerType::kEigenRegular>;
 
 		template<ActivationType activationType, WeightInitializationType weightInitializationType>
-		std::shared_ptr<layerBase> addRegularLayer(uint32_t units)
+		std::shared_ptr<Layer> addRegularLayer(uint32_t units)
 		{
-			if (m_layers.empty())
-				throw std::logic_error("There should be at least one layer in the network before adding regular layer (impossible to deduce matrix dimensions)");
-			const auto prevLayer = m_layers.back();
-			auto curLayer = std::make_shared<layer<LayerType::kEigenRegular>>(units, prevLayer->UnitsInLayer());
+			uint32_t unitsInPreviousLayer = 0;
+			if (!m_layers.empty())
+				unitsInPreviousLayer = m_layers.back()->UnitsInLayer();
+			auto curLayer = std::make_shared<layer<LayerType::kEigenRegular>>(units, unitsInPreviousLayer);
 			curLayer->setActivationType<activationType>();
-			curLayer->initializeWeights<weightInitializationType>();
+			if (!m_layers.empty())
+				curLayer->initializeWeights<weightInitializationType>();
 			m_layers.push_back(curLayer);
 			return curLayer;
 		}
 
-		std::shared_ptr<layerBase> getLayer(size_t layerNumber) { return m_layers[layerNumber]; }
+		std::shared_ptr<Layer> getLayer(size_t layerNumber) { return m_layers[layerNumber]; }
 
-		layerBase::MatrixType feedforward(const layerBase::MatrixType& input)
+		Layer::MatrixType feedforward(const Layer::MatrixType& input)
 		{
-			m_layers[0]->computeActivations(input);
+			m_layers[0]->setActivations(input);
 			for (size_t i = 1; i < m_layers.size(); ++i)
 			{
 				auto l = m_layers[i];
@@ -107,6 +99,6 @@ namespace nn
 		}
 
 	private:
-		std::vector<std::shared_ptr<layerBase>> m_layers;
+		std::vector<std::shared_ptr<Layer>> m_layers;
 	};
 }
