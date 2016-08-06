@@ -32,11 +32,11 @@ int main()
 		real eta = 2.0f;
 		// SGD
 		timing timer;
+		const size_t batches = training_set.size() / batch_size;
+		MatrixType image_batch = MatrixType::Zero(28 * 28, batch_size);
+		std::vector<uint8_t> label_batch(batch_size);
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
-			const size_t batches = training_set.size() / batch_size;
-			MatrixType image_batch = MatrixType::Zero(28 * 28, batch_size);
-			std::vector<uint8_t> label_batch(batch_size);
 			for (size_t k = 0u; k < batches; k++)
 			{
 				const size_t batch_start = k * batch_size;
