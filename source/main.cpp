@@ -1,5 +1,6 @@
 #include <iostream>
 #include "mnist.hpp"
+#include "timing.hpp"
 #include "network.hpp"
 
 int main()
@@ -30,6 +31,7 @@ int main()
 		const size_t batch_size = 10;
 		real eta = 2.0f;
 		// SGD
+		timing timer;
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
 			const size_t batches = training_set.size() / batch_size;
@@ -53,7 +55,7 @@ int main()
 			// learning rate slow down at peak accuracy
 			if (correct > 0.96) eta = 1.0f;
 			if (correct > 0.97) eta = 0.5f;
-			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "%" << std::endl;
+			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
 	}
 	int x;
