@@ -150,7 +150,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include/;externals/eigen3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include/;externals/eigen3;C:\Python27\include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -159,6 +159,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>C:\Python27\libs\python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -167,12 +168,15 @@
     <ClInclude Include="include\layer.hpp" />
     <ClInclude Include="include\mnist.hpp" />
     <ClInclude Include="include\network.hpp" />
+    <ClInclude Include="include\python\py_plot.h" />
     <ClInclude Include="include\settings.hpp" />
     <ClInclude Include="include\timing.hpp" />
     <ClInclude Include="include\weight_initialization.hpp" />
+    <ClInclude Include="source\python\easy.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\python\py_plot.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

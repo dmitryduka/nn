@@ -13,10 +13,19 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\python">
+      <UniqueIdentifier>{a8585469-b721-46df-8549-71d20f1970b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\python">
+      <UniqueIdentifier>{665aa499-3c55-4f5e-ab70-81021e2de32d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\python\py_plot.cpp">
+      <Filter>Source Files\python</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -43,6 +52,12 @@
     </ClInclude>
     <ClInclude Include="include\mnist.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\python\easy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\python\py_plot.h">
+      <Filter>Header Files\python</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
