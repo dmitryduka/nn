@@ -24,6 +24,8 @@ namespace
 			Py_Initialize();
 			initplot();
 		}
+		~PythonWrapper() { Py_Finalize(); }
+
 		template<typename ... T>
 		void plot(T... t)
 		{
@@ -36,7 +38,6 @@ namespace
 			std::lock_guard<std::mutex> lock(m_pythonLock);
 			::save_plot(t...);
 		}
-		~PythonWrapper() { Py_Finalize(); }
 	};
 
 	template<typename T>

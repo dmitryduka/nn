@@ -13,32 +13,30 @@ namespace nn
 		using Layer = layer<LayerType::kEigenRegular>;
 
 		template<ActivationType activationType, WeightInitializationType weightInitializationType>
-		std::shared_ptr<Layer> addRegularLayer(uint32_t units)
+		Layer& addRegularLayer(uint32_t units)
 		{
 			uint32_t unitsInPreviousLayer = 0;
 			if (!m_layers.empty())
-				unitsInPreviousLayer = m_layers.back()->UnitsInLayer();
-			auto curLayer = std::make_shared<layer<LayerType::kEigenRegular>>(units, unitsInPreviousLayer);
-			curLayer->setActivationType<activationType>();
+				unitsInPreviousLayer = m_layers.back().UnitsInLayer();
+			auto curLayer = layer<LayerType::kEigenRegular>(units, unitsInPreviousLayer);
+			curLayer.setActivationType<activationType>();
 			if (!m_layers.empty())
-				curLayer->initializeWeights<weightInitializationType>();
+				curLayer.initializeWeights<weightInitializationType>();
 			m_layers.push_back(curLayer);
 			return curLayer;
 		}
 
-		std::shared_ptr<Layer> getLayer(size_t layerNumber) { return m_layers[layerNumber]; }
-
 		Layer::MatrixType feedforward(const Layer::MatrixType& input)
 		{
-			m_layers[0]->setActivations(input);
+			m_layers[0].setActivations(input);
 			for (size_t i = 1; i < m_layers.size(); ++i)
 			{
-				auto l = m_layers[i];
-				l->computeWeightedSum(m_layers[i - 1]->getActivations());
-				l->computeActivations(l->getWeightedSum());
-				l->computeActivationDerivatives(l->getWeightedSum());
+				auto& l = m_layers[i];
+				l.computeWeightedSum(m_layers[i - 1].getActivations());
+				l.computeActivations(l.getWeightedSum());
+				l.computeActivationDerivatives(l.getWeightedSum());
 			}
-			return m_layers[m_layers.size() - 1]->getActivations();
+			return m_layers[m_layers.size() - 1].getActivations();
 		}
 
 		real evaluate(const std::vector<MatrixType>& inputs, const std::vector<uint8_t>& labels, size_t count = 0)
@@ -63,25 +61,25 @@ namespace nn
 		void backprop(const std::vector<uint8_t>& label_batch)
 		{
 			// make one-hot label out of single uint8_t
-			const auto& outputLayer = m_layers.back();
-			MatrixType labelOneHot = MatrixType::Zero(outputLayer->UnitsInLayer(), outputLayer->getActivations().cols());
+			auto& outputLayer = m_layers.back();
+			MatrixType labelOneHot = MatrixType::Zero(outputLayer.UnitsInLayer(), outputLayer.getActivations().cols());
 			for (int i = 0; i < labelOneHot.cols(); ++i)
 				labelOneHot(label_batch[i], i) = real(1.0);
 			// compute delta
-			MatrixType delta = mse_derivative(outputLayer->getActivations(), labelOneHot).array() * outputLayer->getActivationDerivatives().array();
-			outputLayer->getNablaB() += delta;
-			outputLayer->getNablaW() += delta * m_layers[m_layers.size() - 2]->getActivations().transpose();
+			MatrixType delta = mse_derivative(outputLayer.getActivations(), labelOneHot).array() * outputLayer.getActivationDerivatives().array();
+			outputLayer.getNablaB() += delta;
+			outputLayer.getNablaW() += delta * m_layers[m_layers.size() - 2].getActivations().transpose();
 
 			for (size_t i = m_layers.size() - 2; i > 0; --i)
 			{
 				const auto& nextLayer = m_layers[i + 1];
-				const auto& layer = m_layers[i];
+				auto& layer = m_layers[i];
 				const auto& prevLayer = m_layers[i - 1];
-				auto w = nextLayer->getWeights().transpose();
+				auto w = nextLayer.getWeights().transpose();
 				delta = (w * delta);
-				delta = delta.array() * layer->getActivationDerivatives().array();
-				layer->getNablaB() += delta;
-				layer->getNablaW() += delta * prevLayer->getActivations().transpose();
+				delta = delta.array() * layer.getActivationDerivatives().array();
+				layer.getNablaB() += delta;
+				layer.getNablaW() += delta * prevLayer.getActivations().transpose();
 			}
 		}
 
@@ -89,16 +87,15 @@ namespace nn
 		{
 			for (size_t i = m_layers.size() - 1; i > 0; --i)
 			{
-				const auto& layer = m_layers[i];
-				layer->getWeights() -= (eta / real(batch_size)) * layer->getNablaW();
-				for (int i = 0; i < layer->getNablaB().cols(); ++i)
-					layer->getBias() -= (eta / real(batch_size)) * layer->getNablaB().col(i);
-				layer->getNablaW().setConstant(0.0);
-				layer->getNablaB().setConstant(0.0);
+				auto& layer = m_layers[i];
+				layer.getWeights() -= (eta / real(batch_size)) * layer.getNablaW();
+				for (int i = 0; i < layer.getNablaB().cols(); ++i)
+					layer.getBias() -= (eta / real(batch_size)) * layer.getNablaB().col(i);
+				layer.getNablaW().setConstant(0.0);
+				layer.getNablaB().setConstant(0.0);
 			}
 		}
-
 	private:
-		std::vector<std::shared_ptr<Layer>> m_layers;
+		std::vector<Layer> m_layers;
 	};
 }

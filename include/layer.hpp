@@ -25,6 +25,7 @@ namespace nn
 		using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
 
 		layer(uint32_t unitsInLayer, uint32_t unitsInPreviousLayer) : m_unitsInLayer(unitsInLayer), m_unitsInPreviousLayer(unitsInPreviousLayer) {}
+		~layer() {}
 		template<ActivationType activationType>
 		void setActivationType()
 		{
@@ -62,6 +63,7 @@ namespace nn
 		const MatrixType& getWeightedSum() const { return m_z; }
 		const MatrixType& getActivations() const { return m_a; }
 		const MatrixType& getActivationDerivatives() const { return m_da; }
+		const MatrixType& getWeights() const { return m_weight; }
 		MatrixType& getWeights() { return m_weight; }
 		MatrixType& getBias() { return m_bias; }
 		MatrixType& getNablaB() { return m_nabla_b; }
