@@ -54,18 +54,19 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const size_t epochs = 10;
+	const size_t epochs = 30;
 	const size_t batch_size = 10;
-	const size_t dataset_size = 6000;
+	const size_t dataset_size = 10000;
+	const size_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;
 	{
 		const auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", dataset_size);
 		const auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte", dataset_size);
-		training_set = std::vector<MatrixType>(images.cbegin(), images.cbegin() + 5000);
-		validation_set = std::vector<MatrixType>(images.cbegin() + 5000, images.cend());
-		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + 5000);
-		validation_labels = std::vector<uint8_t>(labels.cbegin() + 5000, labels.cend());
+		training_set = std::vector<MatrixType>(images.cbegin(), images.cbegin() + training_set_size);
+		validation_set = std::vector<MatrixType>(images.cbegin() + training_set_size, images.cend());
+		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + training_set_size);
+		validation_labels = std::vector<uint8_t>(labels.cbegin() + training_set_size, labels.cend());
 	}
 	constexpr ActivationType type = ActivationType::kSigmoid;
 
@@ -75,7 +76,7 @@ int main()
 	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	auto threadFunc = [&](uint32_t threadNo, real eta)
+	auto threadFunc = [&](real eta)
 	{
 		std::vector<float> graph_epoch, graph_acc;
 		network net = original_net;
@@ -101,7 +102,7 @@ int main()
 				net.backprop(label_batch);
 				net.update_weights(eta, batch_size);
 			}
-			real correct = net.evaluate(validation_set, validation_labels);
+			const real correct = net.evaluate(validation_set, validation_labels);
 			graph_epoch.push_back(epoch);
 			graph_acc.push_back(correct);
 			// learning rate slow down at peak accuracy
@@ -114,17 +115,17 @@ int main()
 	};
 
 	std::vector<std::thread> workers;
-	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
-		workers.push_back(std::thread(threadFunc, i, 0.2f + i * 0.1f));
-	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
-		workers[i].join();
+	for (int k = 0; k < 40; k += std::thread::hardware_concurrency())
+	{
+		for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
+			workers.push_back(std::thread(threadFunc, 0.1f + (k + i) * 0.1f));
+		for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
+			workers[i].join();
+		workers.clear();
+	}
 
 	workers.clear();
 
-	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
-		workers.push_back(std::thread(threadFunc, i, 1.0f + i * 0.1f));
-	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
-		workers[i].join();
 
 	g_PythonWrapper.save_plot(0.0, epochs, 0.5, 1.0, "Epochs", "Accuracy", "results.png");
 
