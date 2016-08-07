@@ -54,7 +54,7 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const size_t epochs = 30;
+	const size_t epochs = 10;
 	const size_t batch_size = 10;
 	const size_t dataset_size = 6000;
 	std::vector<MatrixType> training_set, validation_set;
@@ -110,7 +110,7 @@ int main()
 			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
 		const std::string plotLabel = "eta " + to_string(eta);
-		g_PythonWrapper.plot(graph_epoch, graph_acc, 0.0, epochs, 0.5, 1.0, plotLabel);
+		g_PythonWrapper.plot(graph_epoch, graph_acc, plotLabel);
 	};
 
 	std::vector<std::thread> workers;
@@ -126,7 +126,7 @@ int main()
 	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
 		workers[i].join();
 
-	g_PythonWrapper.save_plot("Epochs", "Accuracy", "results.png");
+	g_PythonWrapper.save_plot(0.0, epochs, 0.5, 1.0, "Epochs", "Accuracy", "results.png");
 
 	return 0;
 }

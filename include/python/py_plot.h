@@ -18,8 +18,8 @@
   #define DL_IMPORT(_T) _T
 #endif
 
-__PYX_EXTERN_C DL_IMPORT(void) plot(std::vector<float>  const &, std::vector<float>  const &, float, float, float, float, std::string const &);
-__PYX_EXTERN_C DL_IMPORT(void) save_plot(std::string const &, std::string const &, std::string const &);
+__PYX_EXTERN_C DL_IMPORT(void) plot(std::vector<float>  const &, std::vector<float>  const &, std::string const &);
+__PYX_EXTERN_C DL_IMPORT(void) save_plot(float, float, float, float, std::string const &, std::string const &, std::string const &);
 
 #endif /* !__PYX_HAVE_API__plot */
 
