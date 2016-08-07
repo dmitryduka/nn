@@ -8,11 +8,11 @@
 #ifdef _DEBUG
 #undef _DEBUG
 #include <Python.h>
-#include "python/py_plot.h"
 #define _DEBUG
 #else
 #include <Python.h>
 #endif
+#include "python/py_plot.h"
 
 namespace
 {
