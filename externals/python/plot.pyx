@@ -33,4 +33,4 @@ cdef public void save_plot(float x1, float x2, float y1, float y2, const string&
 	ax.legend(handles2, labels2)
 	figure = plt.gcf()
 	figure.set_size_inches(30, 30)
-	plt.savefig(fileName)
+	plt.savefig(fileName, bbox_inches='tight')
