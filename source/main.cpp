@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <thread>
 #include <mutex>
 #include "mnist.hpp"
@@ -41,9 +42,11 @@ namespace
 	};
 
 	template<typename T>
-	std::string to_string(const T& in)
+	std::string to_string(const T& in, uint32_t width = 0)
 	{
 		std::stringstream out;
+		if (width)
+			out << std::setfill('0') << std::setw(width);
 		out << in;
 		return out.str();
 	}
@@ -76,7 +79,7 @@ int main()
 	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	auto trainNet = [&](real eta, uint32_t batch_size)
+	auto trainNet = [&](uint32_t netNo, real eta, uint32_t batch_size)
 	{
 		std::vector<float> graph_epoch, graph_acc;
 		network net = original_net;
@@ -109,8 +112,8 @@ int main()
 			//if (correct > 0.97) eta = 0.5f;
 			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
-		std::string plotLabel = "eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
-		g_PythonWrapper.plot(graph_epoch, graph_acc, plotLabel);
+		std::string plotLabel = "[" + to_string(netNo, 2) + "] eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
+		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
 
 	std::vector<std::thread> workers;
@@ -120,7 +123,7 @@ int main()
 	{
 		const auto threadLimit = std::min(totalNets - k, std::thread::hardware_concurrency());
 		for (size_t i = 0u; i < threadLimit; ++i)
-			workers.push_back(std::thread(trainNet, 1.6f, 10 + (k + i + 1) * 10));
+			workers.push_back(std::thread(trainNet, k + i, 1.6f, 10 + (k + i + 1) * 10));
 		for (size_t i = 0u; i < threadLimit; ++i)
 			workers[i].join();
 		workers.clear();

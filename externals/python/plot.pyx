@@ -4,12 +4,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import operator
 
-cdef public void initialize_plot(int plot_count):
-	colormap = plt.cm.cool
-	plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, plot_count)])
+cdef int plot_count
 
-cdef public void plot(const vector[float]& x, const vector[float]& y, const string& plotLabel):
-	plt.plot(x, y, label=plotLabel)
+cdef public void initialize_plot(int count):
+	global plot_count
+	plot_count = count
+
+cdef public void plot(int plotNo, const vector[float]& x, const vector[float]& y, const string& plotLabel):
+	global plot_count
+	colormap = plt.cm.cool
+	plt.plot(x, y, label=plotLabel, color=colormap(float(plotNo)/float(plot_count)))
 
 cdef public void save_plot(float x1, float x2, float y1, float y2, const string& xAxis, const string& yAxis, const string& fileName):
 	plt.xlim([x1, x2]);

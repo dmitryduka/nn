@@ -19,7 +19,7 @@
 #endif
 
 __PYX_EXTERN_C DL_IMPORT(void) initialize_plot(int);
-__PYX_EXTERN_C DL_IMPORT(void) plot(std::vector<float>  const &, std::vector<float>  const &, std::string const &);
+__PYX_EXTERN_C DL_IMPORT(void) plot(int, std::vector<float>  const &, std::vector<float>  const &, std::string const &);
 __PYX_EXTERN_C DL_IMPORT(void) save_plot(float, float, float, float, std::string const &, std::string const &, std::string const &);
 
 #endif /* !__PYX_HAVE_API__plot */
