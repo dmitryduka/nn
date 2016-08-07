@@ -80,8 +80,6 @@ int main()
 	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	std::map<uint32_t, float> seconds;
-	std::mutex slock;
 	auto trainNet = [&](uint32_t netNo, real eta, uint32_t batch_size)
 	{
 		std::vector<float> graph_epoch, graph_acc;
@@ -115,41 +113,24 @@ int main()
 			//if (correct > 0.97) eta = 0.5f;
 			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
-		std::lock_guard<std::mutex> lock(slock);
-		seconds[batch_size] = timer.seconds();
-		//const std::string plotLabel = "[" + to_string(netNo, 2) + "] eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
-		//g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
+		std::string plotLabel = "[" + to_string(netNo, 2) + "] eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
+		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
 
 	std::vector<std::thread> workers;
-	const uint32_t totalNets = 40u;
-	::initialize_plot(1);
+	const uint32_t totalNets = 8u;
+	::initialize_plot(totalNets);
 	for (uint32_t k = 0; k < totalNets; k += std::thread::hardware_concurrency())
 	{
 		const auto threadLimit = std::min(totalNets - k, std::thread::hardware_concurrency());
 		for (size_t i = 0u; i < threadLimit; ++i)
-			workers.push_back(std::thread(trainNet, k + i, 1.6f, 10 + (k + i) * 10));
+			workers.push_back(std::thread(trainNet, k + i, 1.6f, 10 + (k + i + 1) * 10));
 		for (size_t i = 0u; i < threadLimit; ++i)
 			workers[i].join();
 		workers.clear();
 	}
 
-	std::vector<float> mb;
-	std::vector<float> ms;
-	for (auto it : seconds)
-	{
-		mb.push_back(it.first);
-		ms.push_back(it.second);
-	}
-
-	const auto mbmin = *std::min_element(mb.cbegin(), mb.cend());
-	const auto msmin = *std::min_element(ms.cbegin(), ms.cend());
-	const auto mbmax = *std::max_element(mb.cbegin(), mb.cend());
-	const auto msmax = *std::max_element(ms.cbegin(), ms.cend());
-
-	g_PythonWrapper.plot(1, mb, ms, "perf.");
-
-	g_PythonWrapper.save_plot(mbmin, mbmax, msmin, msmax, 10, 1.0, "Batch size", "Time to learn (30 epochs)", "results.png");
+	g_PythonWrapper.save_plot(0.0, epochs, 0.0, 1.0, 1.0, 0.01, "Epochs", "Accuracy", "results.png");
 
 	return 0;
 }
