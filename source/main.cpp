@@ -5,8 +5,14 @@
 #include "mnist.hpp"
 #include "timing.hpp"
 #include "network.hpp"
-#include "Python.h"
+#ifdef _DEBUG
+#undef _DEBUG
+#include <Python.h>
 #include "python/py_plot.h"
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
 
 namespace
 {
@@ -60,17 +66,18 @@ int main()
 		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + 5000);
 		validation_labels = std::vector<uint8_t>(labels.cbegin() + 5000, labels.cend());
 	}
+	constexpr ActivationType type = ActivationType::kSigmoid;
+
+	network original_net;
+	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(28 * 28);
+	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
+	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
 	auto threadFunc = [&](uint32_t threadNo, real eta)
 	{
 		std::vector<float> graph_epoch, graph_acc;
-		network net;
-		constexpr ActivationType type = ActivationType::kSigmoid;
-
-		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(28 * 28);
-		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
-		net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
+		network net = original_net;
 	
 		// SGD
 		timing timer;
