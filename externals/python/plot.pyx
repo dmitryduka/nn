@@ -14,5 +14,5 @@ cdef public void save_plot(const string& xAxis, const string& yAxis, const strin
 	plt.ylabel(yAxis)
 	plt.legend()
 	figure = plt.gcf()
-	figure.set_size_inches(20, 20)
+	figure.set_size_inches(40, 40)
 	plt.savefig(fileName)

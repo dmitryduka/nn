@@ -107,7 +107,14 @@ int main()
 
 	std::vector<std::thread> workers;
 	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
-		workers.push_back(std::thread(threadFunc, i, 0.5f + i * 0.5f));
+		workers.push_back(std::thread(threadFunc, i, 0.2f + i * 0.1f));
+	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
+		workers[i].join();
+
+	workers.clear();
+
+	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
+		workers.push_back(std::thread(threadFunc, i, 1.0f + i * 0.1f));
 	for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
 		workers[i].join();
 

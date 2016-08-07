@@ -689,7 +689,7 @@ static PyObject *__pyx_n_s_xlabel;
 static PyObject *__pyx_n_s_xlim;
 static PyObject *__pyx_n_s_ylabel;
 static PyObject *__pyx_n_s_ylim;
-static PyObject *__pyx_int_20;
+static PyObject *__pyx_int_40;
 static PyObject *__pyx_tuple__2;
 
 /* "plot.pyx":6
@@ -1038,7 +1038,7 @@ void save_plot(std::string const &__pyx_v_xAxis, std::string const &__pyx_v_yAxi
  * 	plt.ylabel(yAxis)
  * 	plt.legend()             # <<<<<<<<<<<<<<
  * 	figure = plt.gcf()
- * 	figure.set_size_inches(20, 20)
+ * 	figure.set_size_inches(40, 40)
  */
   __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_plt); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 15; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
@@ -1069,7 +1069,7 @@ void save_plot(std::string const &__pyx_v_xAxis, std::string const &__pyx_v_yAxi
  * 	plt.ylabel(yAxis)
  * 	plt.legend()
  * 	figure = plt.gcf()             # <<<<<<<<<<<<<<
- * 	figure.set_size_inches(20, 20)
+ * 	figure.set_size_inches(40, 40)
  * 	plt.savefig(fileName)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_plt); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -1101,7 +1101,7 @@ void save_plot(std::string const &__pyx_v_xAxis, std::string const &__pyx_v_yAxi
   /* "plot.pyx":17
  * 	plt.legend()
  * 	figure = plt.gcf()
- * 	figure.set_size_inches(20, 20)             # <<<<<<<<<<<<<<
+ * 	figure.set_size_inches(40, 40)             # <<<<<<<<<<<<<<
  * 	plt.savefig(fileName)
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_figure, __pyx_n_s_set_size_inches); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 17; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -1113,7 +1113,7 @@ void save_plot(std::string const &__pyx_v_xAxis, std::string const &__pyx_v_yAxi
 
   /* "plot.pyx":18
  * 	figure = plt.gcf()
- * 	figure.set_size_inches(20, 20)
+ * 	figure.set_size_inches(40, 40)
  * 	plt.savefig(fileName)             # <<<<<<<<<<<<<<
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_plt); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -1546,10 +1546,10 @@ static int __Pyx_InitCachedConstants(void) {
   /* "plot.pyx":17
  * 	plt.legend()
  * 	figure = plt.gcf()
- * 	figure.set_size_inches(20, 20)             # <<<<<<<<<<<<<<
+ * 	figure.set_size_inches(40, 40)             # <<<<<<<<<<<<<<
  * 	plt.savefig(fileName)
  */
-  __pyx_tuple__2 = PyTuple_Pack(2, __pyx_int_20, __pyx_int_20); if (unlikely(!__pyx_tuple__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 17; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__2 = PyTuple_Pack(2, __pyx_int_40, __pyx_int_40); if (unlikely(!__pyx_tuple__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 17; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
   __Pyx_RefNannyFinishContext();
@@ -1561,7 +1561,7 @@ static int __Pyx_InitCachedConstants(void) {
 
 static int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
-  __pyx_int_20 = PyInt_FromLong(20); if (unlikely(!__pyx_int_20)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_int_40 = PyInt_FromLong(40); if (unlikely(!__pyx_int_40)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   return 0;
   __pyx_L1_error:;
   return -1;
