@@ -23,7 +23,7 @@ namespace nn
 			if (!m_layers.empty())
 				curLayer.initializeWeights<weightInitializationType>();
 			m_layers.push_back(curLayer);
-			return curLayer;
+			return m_layers.back();
 		}
 
 		Layer::MatrixType feedforward(const Layer::MatrixType& input)
@@ -78,6 +78,9 @@ namespace nn
 				auto w = nextLayer.getWeights().transpose();
 				delta = (w * delta);
 				delta = delta.array() * layer.getActivationDerivatives().array();
+				// resize nabla-b to match the batch size
+				if (layer.getNablaB().cols() != delta.cols())
+					layer.getNablaB() = MatrixType::Zero(delta.rows(), delta.cols());
 				layer.getNablaB() += delta;
 				layer.getNablaW() += delta * prevLayer.getActivations().transpose();
 			}

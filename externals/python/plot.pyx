@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import operator
 
+cdef public void initialize_plot(int plot_count):
+	colormap = plt.cm.cool
+	plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, plot_count)])
+
 cdef public void plot(const vector[float]& x, const vector[float]& y, const string& plotLabel):
 	plt.plot(x, y, label=plotLabel)
 
@@ -16,9 +20,9 @@ cdef public void save_plot(float x1, float x2, float y1, float y2, const string&
 	plt.xlabel(xAxis)
 	plt.ylabel(yAxis)
 	plt.grid()	
-	plt.legend()
-	ax=plt.axes()
+	ax = plt.axes()
 	handles, labels = ax.get_legend_handles_labels()
+	plt.legend(fancybox=True, shadow=True)
 	hl=sorted(zip(handles, labels),
 	key=operator.itemgetter(1))
 	handles2, labels2 = zip(*hl)

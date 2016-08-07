@@ -54,10 +54,10 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const size_t epochs = 30;
-	const size_t batch_size = 10;
-	const size_t dataset_size = 10000;
-	const size_t training_set_size = dataset_size * 0.9;
+	const uint32_t epochs = 30;
+	const uint32_t batch_size = 10;
+	const uint32_t dataset_size = 10000;
+	const uint32_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;
 	{
@@ -68,19 +68,18 @@ int main()
 		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + training_set_size);
 		validation_labels = std::vector<uint8_t>(labels.cbegin() + training_set_size, labels.cend());
 	}
-	constexpr ActivationType type = ActivationType::kSigmoid;
 
+	constexpr ActivationType type = ActivationType::kSigmoid;
 	network original_net;
 	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(28 * 28);
 	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
 	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	auto threadFunc = [&](real eta)
+	auto trainNet = [&](real eta, uint32_t batch_size)
 	{
 		std::vector<float> graph_epoch, graph_acc;
 		network net = original_net;
-	
 		// SGD
 		timing timer;
 		const size_t batches = training_set.size() / batch_size;
@@ -110,26 +109,24 @@ int main()
 			//if (correct > 0.97) eta = 0.5f;
 			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
-		const std::string plotLabel = "eta " + to_string(eta);
+		std::string plotLabel = "eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
 		g_PythonWrapper.plot(graph_epoch, graph_acc, plotLabel);
 	};
 
 	std::vector<std::thread> workers;
-	const uint32_t totalNets = 10u;
+	const uint32_t totalNets = 16u;
+	::initialize_plot(totalNets);
 	for (uint32_t k = 0; k < totalNets; k += std::thread::hardware_concurrency())
 	{
 		const auto threadLimit = std::min(totalNets - k, std::thread::hardware_concurrency());
 		for (size_t i = 0u; i < threadLimit; ++i)
-			workers.push_back(std::thread(threadFunc, 0.1f + (k + i) * 0.5f));
+			workers.push_back(std::thread(trainNet, 1.6f, 10 + (k + i + 1) * 10));
 		for (size_t i = 0u; i < threadLimit; ++i)
 			workers[i].join();
 		workers.clear();
 	}
 
-	workers.clear();
-
-
-	g_PythonWrapper.save_plot(0.0, epochs, 0.5, 1.0, "Epochs", "Accuracy", "results.png");
+	g_PythonWrapper.save_plot(0.0, epochs, 0.0, 1.0, "Epochs", "Accuracy", "results.png");
 
 	return 0;
 }
