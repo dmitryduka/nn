@@ -2,6 +2,7 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 import matplotlib.pyplot as plt
 import numpy as np
+import operator
 
 cdef public void plot(const vector[float]& x, const vector[float]& y, const string& plotLabel):
 	plt.plot(x, y, label=plotLabel)
@@ -16,6 +17,12 @@ cdef public void save_plot(float x1, float x2, float y1, float y2, const string&
 	plt.ylabel(yAxis)
 	plt.grid()	
 	plt.legend()
+	ax=plt.axes()
+	handles, labels = ax.get_legend_handles_labels()
+	hl=sorted(zip(handles, labels),
+	key=operator.itemgetter(1))
+	handles2, labels2 = zip(*hl)
+	ax.legend(handles2, labels2)
 	figure = plt.gcf()
 	figure.set_size_inches(30, 30)
 	plt.savefig(fileName)

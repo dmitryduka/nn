@@ -115,11 +115,13 @@ int main()
 	};
 
 	std::vector<std::thread> workers;
-	for (int k = 0; k < 40; k += std::thread::hardware_concurrency())
+	const uint32_t totalNets = 10u;
+	for (uint32_t k = 0; k < totalNets; k += std::thread::hardware_concurrency())
 	{
-		for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
-			workers.push_back(std::thread(threadFunc, 0.1f + (k + i) * 0.1f));
-		for (size_t i = 0u; i < std::thread::hardware_concurrency(); ++i)
+		const auto threadLimit = std::min(totalNets - k, std::thread::hardware_concurrency());
+		for (size_t i = 0u; i < threadLimit; ++i)
+			workers.push_back(std::thread(threadFunc, 0.1f + (k + i) * 0.5f));
+		for (size_t i = 0u; i < threadLimit; ++i)
 			workers[i].join();
 		workers.clear();
 	}
