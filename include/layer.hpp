@@ -116,7 +116,8 @@ namespace nn
 			}
 			else if (m_type == LayerType::kSoftmax)
 			{
-				m_a = input;
+				if (m_a.rows() != input.rows() || m_a.cols() != input.cols())
+					m_a = MatrixType::Zero(input.rows(), input.cols());
 				for (int i = 0; i < input.cols(); ++i)
 				{
 					m_a.col(i).noalias() = input.col(i).unaryExpr(&expf);
@@ -127,15 +128,9 @@ namespace nn
 		void computeActivationDerivatives(const MatrixType& input) 
 		{ 
 			if (m_type == LayerType::kRegular)
-			{
 				m_da.noalias() = input.unaryExpr(m_activationDerivative);
-			}
 			else if (m_type == LayerType::kSoftmax)
-			{
-				m_da = m_a;
-				auto softmax_derivative = [](real x) { return x * (1 - x); };
-				m_da = m_da.unaryExpr(softmax_derivative);
-			}
+				m_da = MatrixType::Ones(m_a.rows(), m_a.cols());
 		}
 
 		const MatrixType& getWeightedSum() const { return m_z; }

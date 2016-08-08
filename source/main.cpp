@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <thread>
 #include <mutex>
+#include <tuple>
 #include <map>
 #include "mnist.hpp"
 #include "timing.hpp"
@@ -61,7 +62,7 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 50;
+	const uint32_t epochs = 25;
 	const uint32_t dataset_size = 10000;
 	const uint32_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
@@ -74,15 +75,16 @@ int main()
 		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + training_set_size);
 		validation_labels = std::vector<uint8_t>(labels.cbegin() + training_set_size, labels.cend());
 	}
+	network original_net;
+	original_net.addRegularLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
+	original_net.addRegularLayer(LayerType::kRegular, 64, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+	original_net.addRegularLayer(LayerType::kRegular, 64, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+	original_net.addRegularLayer(LayerType::kSoftmax, 10, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
+	original_net.setCostFunction(CostType::kCrossEntropy);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	auto trainNet = [&](uint32_t netNo, uint32_t unitsInHiddenLayers, real eta, uint32_t batch_size)
+	auto trainNet = [&](uint32_t netNo, real eta, real lambda, uint32_t batch_size)
 	{
-		network original_net;
-		original_net.addRegularLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
-		original_net.addRegularLayer(LayerType::kRegular, unitsInHiddenLayers, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
-		original_net.addRegularLayer(LayerType::kRegular, unitsInHiddenLayers, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
-		original_net.addRegularLayer(LayerType::kRegular, 10, ActivationType::kLinear, WeightInitializationType::kWeightedGaussian);
 		std::vector<float> graph_epoch, graph_acc;
 		network net = original_net;
 		// SGD
@@ -90,6 +92,7 @@ int main()
 		const size_t batches = training_set.size() / batch_size;
 		MatrixType image_batch = MatrixType::Zero(28 * 28, batch_size);
 		std::vector<uint8_t> label_batch(batch_size);
+		evaluate_results result;
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
 			for (size_t k = 0u; k < batches; k++)
@@ -104,34 +107,32 @@ int main()
 				}
 				net.feedforward(image_batch);
 				net.backprop(label_batch);
-				net.update_weights(eta, batch_size);
+				net.update_weights(eta, lambda, batch_size);
 			}
-			const real correct = net.evaluate(validation_set, validation_labels);
+			result = net.evaluate(validation_set, validation_labels);
 			graph_epoch.push_back(epoch);
-			graph_acc.push_back(correct);
-			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
+			graph_acc.push_back(result.accuracy);
+			std::cout << "Epoch " << epoch << ", acc: " << result.accuracy * 100.0f << "%, cost = " << result.cost << " (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
-		std::string plotLabel = "[" + to_string(unitsInHiddenLayers) + "] eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
+
+		const bool dump_error_images = false;
+		if (dump_error_images)
+		{
+			for (auto i : result.errors)
+			{
+				std::vector<float> img(validation_set[i].data(), validation_set[i].data() + 28 * 28);
+				plot_image(img, "error" + to_string(i) + ".png");
+			}
+		}
+
+		std::string plotLabel = "eta=" + to_string(eta) + ",lambda=" + to_string(lambda) + ", bs=" + to_string(batch_size);
 		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
-	std::vector<std::tuple<float, uint32_t, uint32_t>> params = {
-		//{ 0.0001f, 100 },
-		//{ 0.0005f, 100 },
-		//{ 0.001f, 100 },
-		//{ 0.005f, 100 },
-		//{ 0.0001f, 10 },
-		//{ 0.0005f, 10 },
-		//{ 0.001f, 10 },
-		//{ 0.005f, 10 }
-		{ 0.001f, 16, 16 },
-		{ 0.001f, 16, 32 },
-		{ 0.001f, 16, 48 },
-		{ 0.001f, 16, 64 },
-		{ 0.001f, 16, 80 },
-		{ 0.001f, 16, 96 },
-		{ 0.001f, 16, 128 },
-		{ 0.001f, 16, 256 }
+
+	std::vector<std::tuple<float, float>> params = { 
+		std::make_tuple(0.1f, 0.0f),
 	};
+
 	std::vector<std::thread> workers;
 	const uint32_t totalNets = uint32_t(params.size());
 	::initialize_plot(totalNets);
@@ -142,10 +143,9 @@ int main()
 		{
 			const auto param = params.back();
 			const auto eta = std::get<0>(param);
-			const auto batch_size = std::get<1>(param);
-			const auto units_in_hidden_layer = std::get<2>(param);
+			const auto lambda = std::get<1>(param);
 			params.pop_back();
-			workers.push_back(std::thread(trainNet, k + i, units_in_hidden_layer, eta, batch_size));
+			workers.push_back(std::thread(trainNet, k + i, eta, lambda, 32));
 		}
 		for (size_t i = 0u; i < threadLimit; ++i)
 			workers[i].join();

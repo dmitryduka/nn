@@ -1,6 +1,7 @@
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 import matplotlib.pyplot as plt
+import math
 import numpy as np
 import operator
 
@@ -14,6 +15,12 @@ cdef public void plot(int plotNo, const vector[float]& x, const vector[float]& y
 	global plot_count
 	colormap = plt.cm.cool
 	plt.plot(x, y, label=plotLabel, color=colormap(float(plotNo)/float(plot_count)))
+
+cdef public void plot_image(const vector[float]& x, const string& fileName):
+	width = math.sqrt(len(x))
+	img = np.reshape(x, (width, width))
+	plt.imshow(img)
+	plt.savefig(fileName, bbox_inches='tight')
 
 cdef public void save_plot(float x1, float x2, float y1, float y2, float xtick, float ytick, const string& xAxis, const string& yAxis, const string& fileName):
 	plt.xlim([x1, x2]);
