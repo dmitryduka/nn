@@ -10,8 +10,11 @@ namespace nn
 {
 	enum class ActivationType
 	{
+		kNone,
+		kLinear,
 		kSigmoid,
 		kRelu,
+		kLRelu,
 		kTanh
 	};
 
@@ -30,11 +33,23 @@ namespace nn
 		return x * (1.0 - x);
 	}
 
+	// sigmoid
+	template<>
+	real activation<ActivationType::kLinear>(real in) { return in; }
+	template<>
+	real activation_derivative<ActivationType::kLinear>(real in) { return 1.0; }
+
 	// RELU
 	template<>
 	real activation<ActivationType::kRelu>(real in) { return std::max(in, real(0.0)); }
 	template<>
 	real activation_derivative<ActivationType::kRelu>(real in) { return in > 0.0 ? 1.0 : 0.0; }
+
+	// LRELU (Leaky RELU)
+	template<>
+	real activation<ActivationType::kLRelu>(real in) { return in > 0.0 ? in : 0.001 * in; }
+	template<>
+	real activation_derivative<ActivationType::kLRelu>(real in) { return in > 0.0 ? 1.0 : -0.001; }
 
 	// tanh
 	template<>

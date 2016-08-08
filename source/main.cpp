@@ -26,7 +26,10 @@ namespace
 			Py_Initialize();
 			initplot();
 		}
-		~PythonWrapper() { Py_Finalize(); }
+		~PythonWrapper() 
+		{ 
+			Py_Finalize(); 
+		}
 
 		template<typename ... T>
 		void plot(T... t)
@@ -58,8 +61,7 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 30;
-	const uint32_t batch_size = 10;
+	const uint32_t epochs = 50;
 	const uint32_t dataset_size = 10000;
 	const uint32_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
@@ -72,16 +74,15 @@ int main()
 		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + training_set_size);
 		validation_labels = std::vector<uint8_t>(labels.cbegin() + training_set_size, labels.cend());
 	}
-
-	constexpr ActivationType type = ActivationType::kSigmoid;
-	network original_net;
-	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(28 * 28);
-	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(50);
-	original_net.addRegularLayer<type, WeightInitializationType::kWeightedGaussian>(10);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
 	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	auto trainNet = [&](uint32_t netNo, real eta, uint32_t batch_size)
+	auto trainNet = [&](uint32_t netNo, uint32_t unitsInHiddenLayers, real eta, uint32_t batch_size)
 	{
+		network original_net;
+		original_net.addRegularLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
+		original_net.addRegularLayer(LayerType::kRegular, unitsInHiddenLayers, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+		original_net.addRegularLayer(LayerType::kRegular, unitsInHiddenLayers, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+		original_net.addRegularLayer(LayerType::kRegular, 10, ActivationType::kLinear, WeightInitializationType::kWeightedGaussian);
 		std::vector<float> graph_epoch, graph_acc;
 		network net = original_net;
 		// SGD
@@ -108,23 +109,44 @@ int main()
 			const real correct = net.evaluate(validation_set, validation_labels);
 			graph_epoch.push_back(epoch);
 			graph_acc.push_back(correct);
-			// learning rate slow down at peak accuracy
-			//if (correct > 0.96) eta = 1.0f;
-			//if (correct > 0.97) eta = 0.5f;
 			std::cout << "Epoch " << epoch << ", acc: " << correct * 100.0f << "% (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
-		std::string plotLabel = "[" + to_string(netNo, 2) + "] eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
+		std::string plotLabel = "[" + to_string(unitsInHiddenLayers) + "] eta=" + to_string(eta) + ", bs=" + to_string(batch_size);
 		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
-
+	std::vector<std::tuple<float, uint32_t, uint32_t>> params = {
+		//{ 0.0001f, 100 },
+		//{ 0.0005f, 100 },
+		//{ 0.001f, 100 },
+		//{ 0.005f, 100 },
+		//{ 0.0001f, 10 },
+		//{ 0.0005f, 10 },
+		//{ 0.001f, 10 },
+		//{ 0.005f, 10 }
+		{ 0.001f, 16, 16 },
+		{ 0.001f, 16, 32 },
+		{ 0.001f, 16, 48 },
+		{ 0.001f, 16, 64 },
+		{ 0.001f, 16, 80 },
+		{ 0.001f, 16, 96 },
+		{ 0.001f, 16, 128 },
+		{ 0.001f, 16, 256 }
+	};
 	std::vector<std::thread> workers;
-	const uint32_t totalNets = 8u;
+	const uint32_t totalNets = uint32_t(params.size());
 	::initialize_plot(totalNets);
 	for (uint32_t k = 0; k < totalNets; k += std::thread::hardware_concurrency())
 	{
 		const auto threadLimit = std::min(totalNets - k, std::thread::hardware_concurrency());
 		for (size_t i = 0u; i < threadLimit; ++i)
-			workers.push_back(std::thread(trainNet, k + i, 1.6f, 10 + (k + i + 1) * 10));
+		{
+			const auto param = params.back();
+			const auto eta = std::get<0>(param);
+			const auto batch_size = std::get<1>(param);
+			const auto units_in_hidden_layer = std::get<2>(param);
+			params.pop_back();
+			workers.push_back(std::thread(trainNet, k + i, units_in_hidden_layer, eta, batch_size));
+		}
 		for (size_t i = 0u; i < threadLimit; ++i)
 			workers[i].join();
 		workers.clear();

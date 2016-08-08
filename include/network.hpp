@@ -10,18 +10,14 @@ namespace nn
 	class network
 	{
 	public:
-		using Layer = layer<LayerType::kEigenRegular>;
+		using Layer = layer;
 
-		template<ActivationType activationType, WeightInitializationType weightInitializationType>
-		Layer& addRegularLayer(uint32_t units)
+		Layer& addRegularLayer(LayerType type, uint32_t units, ActivationType activationType, WeightInitializationType weightInitializationType)
 		{
 			uint32_t unitsInPreviousLayer = 0;
 			if (!m_layers.empty())
 				unitsInPreviousLayer = m_layers.back().UnitsInLayer();
-			auto curLayer = layer<LayerType::kEigenRegular>(units, unitsInPreviousLayer);
-			curLayer.setActivationType<activationType>();
-			if (!m_layers.empty())
-				curLayer.initializeWeights<weightInitializationType>();
+			auto curLayer = layer(type, units, unitsInPreviousLayer, activationType, weightInitializationType);
 			m_layers.push_back(curLayer);
 			return m_layers.back();
 		}
@@ -67,6 +63,8 @@ namespace nn
 				labelOneHot(label_batch[i], i) = real(1.0);
 			// compute delta
 			MatrixType delta = mse_derivative(outputLayer.getActivations(), labelOneHot).array() * outputLayer.getActivationDerivatives().array();
+			if (outputLayer.getNablaB().cols() != delta.cols())
+				outputLayer.getNablaB() = MatrixType::Zero(delta.rows(), delta.cols());
 			outputLayer.getNablaB() += delta;
 			outputLayer.getNablaW() += delta * m_layers[m_layers.size() - 2].getActivations().transpose();
 
@@ -98,7 +96,7 @@ namespace nn
 				layer.getNablaB().setConstant(0.0);
 			}
 		}
-	private:
+	public:
 		std::vector<Layer> m_layers;
 	};
 }
