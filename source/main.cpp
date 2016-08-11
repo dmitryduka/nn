@@ -64,7 +64,7 @@ int main()
 {
 	using namespace nn;
 	const uint32_t epochs = 60;
-	const uint32_t dataset_size = 60000;
+	const uint32_t dataset_size = 10000;
 	const uint32_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;
@@ -78,8 +78,8 @@ int main()
 	}
 	network original_net;
 	original_net.addRegularLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
-	original_net.addRegularLayer(LayerType::kRegular, 64, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
-	original_net.addRegularLayer(LayerType::kRegular, 64, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+	original_net.addRegularLayer(LayerType::kRegular, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+	original_net.addRegularLayer(LayerType::kRegular, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
 	original_net.addRegularLayer(LayerType::kSoftmax, 10, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
 	original_net.setCostFunction(CostType::kCrossEntropy);
 	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
@@ -91,25 +91,10 @@ int main()
 		// SGD
 		timing timer;
 		const size_t batches = training_set.size() / batch_size;
-		MatrixType image_batch = MatrixType::Zero(28 * 28, batch_size);
-		std::vector<uint8_t> label_batch(batch_size);
 		evaluate_results result;
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
-			for (size_t k = 0u; k < batches; k++)
-			{
-				const size_t batch_start = k * batch_size;
-				const size_t batch_end = (k + 1) * batch_size;
-
-				for (size_t i = batch_start; i < batch_end; ++i)
-				{
-					image_batch.col(i - batch_start) = training_set[i];
-					label_batch[i - batch_start] = training_labels[i];
-				}
-				net.feedforward(image_batch);
-				net.backprop(label_batch);
-				net.update_weights(eta, lambda, batch_size);
-			}
+			net.sgd(28, 28, batches, batch_size, eta, lambda, training_set, training_labels);
 			result = net.evaluate(validation_set, validation_labels);
 			graph_epoch.push_back(epoch);
 			graph_acc.push_back(result.accuracy);
