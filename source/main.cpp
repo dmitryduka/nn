@@ -63,8 +63,8 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 60;
-	const uint32_t dataset_size = 10000;
+	const uint32_t epochs = 10;
+	const uint32_t dataset_size = 60000;
 	const uint32_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;
@@ -94,12 +94,13 @@ int main()
 		evaluate_results result;
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
-			net.sgd(28, 28, batches, batch_size, eta, lambda, training_set, training_labels);
-			result = net.evaluate(validation_set, validation_labels);
+			net.psgd(28, 28, batches, batch_size, eta, lambda, training_set, training_labels);
 			graph_epoch.push_back(epoch);
 			graph_acc.push_back(result.accuracy);
-			std::cout << "Epoch " << epoch << ", acc: " << result.accuracy * 100.0f << "%, cost = " << result.cost << " (" << timer.seconds() << " seconds passed)" << std::endl;
+			std::cout << "Epoch " << epoch << " (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
+		result = net.evaluate(validation_set, validation_labels);
+		std::cout << "acc: " << result.accuracy * 100.0f << "%, cost = " << result.cost << " (" << timer.seconds() << " seconds passed)" << std::endl;
 
 		const bool dump_error_images = false;
 		if (dump_error_images)

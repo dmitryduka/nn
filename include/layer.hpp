@@ -134,6 +134,44 @@ namespace nn
 				m_da = MatrixType::Ones(m_a.rows(), m_a.cols());
 		}
 
+		MatrixType computeWeightedSumExplicit(const MatrixType& input)
+		{
+			MatrixType result = m_weight * input;
+			for (int i = 0; i < result.cols(); ++i)
+				result.col(i).noalias() += m_bias;
+			return result;
+		}
+
+		MatrixType computeActivationsExplicit(const MatrixType& input)
+		{
+			MatrixType result;
+			if (m_type == LayerType::kRegular)
+				result.noalias() = input.unaryExpr(m_activation);
+			else if (m_type == LayerType::kSoftmax)
+			{
+				if (result.rows() != input.rows() || result.cols() != input.cols())
+					result = MatrixType::Zero(input.rows(), input.cols());
+				MatrixType maxCol(result.rows(), 1);
+				for (int i = 0; i < input.cols(); ++i)
+				{
+					maxCol.setConstant(input.maxCoeff()); // prevent softmax overflow
+					result.col(i).noalias() = (input.col(i) - maxCol).unaryExpr(&expf);
+					result.col(i) /= result.col(i).sum();
+				}
+			}
+			return result;
+		}
+		MatrixType computeActivationDerivativesExplicit(const MatrixType& input)
+		{
+			MatrixType result;
+			if (m_type == LayerType::kRegular)
+				result.noalias() = input.unaryExpr(m_activationDerivative);
+			else if (m_type == LayerType::kSoftmax)
+				result = MatrixType::Ones(input.rows(), input.cols());
+			return result;
+		}
+
+
 		const MatrixType& getWeightedSum() const { return m_z; }
 		const MatrixType& getActivations() const { return m_a; }
 		const MatrixType& getActivationDerivatives() const { return m_da; }

@@ -43,6 +43,7 @@ namespace nn
 			}
 		}
 
+		// singlethread version
 		Layer::MatrixType feedforward(const Layer::MatrixType& input)
 		{
 			m_layers[0].setActivations(input);
@@ -56,6 +57,25 @@ namespace nn
 			return m_layers[m_layers.size() - 1].getActivations();
 		}
 
+		// multithread version
+		void feedforward(const Layer::MatrixType& input, 
+			std::vector<Layer::MatrixType>& activations, 
+			std::vector<Layer::MatrixType>& activationDerivatives)
+		{
+			MatrixType in = input;
+			activations.push_back(in);
+			activationDerivatives.push_back(MatrixType());
+			for (size_t i = 1; i < m_layers.size(); ++i)
+			{
+				auto& l = m_layers[i];
+				in = l.computeWeightedSumExplicit(in);
+				in = l.computeActivationsExplicit(in);
+				activations.push_back(in);
+				activationDerivatives.push_back(l.computeActivationDerivativesExplicit(in));
+			}
+		}
+
+		// singlethread version
 		void backprop(const std::vector<uint8_t>& label_batch)
 		{
 			// make one-hot label out of single uint8_t
@@ -67,16 +87,15 @@ namespace nn
 			MatrixType delta = m_cost_derivative(outputLayer.getActivations(), labelOneHot).array() * outputLayer.getActivationDerivatives().array();
 			if (outputLayer.getNablaB().cols() != delta.cols())
 				outputLayer.getNablaB() = MatrixType::Zero(delta.rows(), delta.cols());
-			outputLayer.getNablaB() += delta;
-			outputLayer.getNablaW() += delta * m_layers[m_layers.size() - 2].getActivations().transpose();
+			outputLayer.getNablaB().noalias() += delta;
+			outputLayer.getNablaW().noalias() += delta * m_layers[m_layers.size() - 2].getActivations().transpose();
 
 			for (size_t i = m_layers.size() - 2; i > 0; --i)
 			{
 				const auto& nextLayer = m_layers[i + 1];
 				auto& layer = m_layers[i];
 				const auto& prevLayer = m_layers[i - 1];
-				auto w = nextLayer.getWeights().transpose();
-				delta = (w * delta);
+				delta = nextLayer.getWeights().transpose() * delta;
 				delta = delta.array() * layer.getActivationDerivatives().array();
 				// resize nabla-b to match the batch size
 				if (layer.getNablaB().cols() != delta.cols())
@@ -86,6 +105,36 @@ namespace nn
 			}
 		}
 
+		// multithread version
+		void backprop(const std::vector<uint8_t>& label_batch,
+			const std::vector<Layer::MatrixType>& activations,
+			const std::vector<Layer::MatrixType>& activationDerivatives,
+			std::vector<Layer::MatrixType>& nabla_w,
+			std::vector<Layer::MatrixType>& nabla_b)
+		{
+			// make one-hot label out of single uint8_t
+			auto& outputLayer = m_layers.back();
+			MatrixType labelOneHot = MatrixType::Zero(outputLayer.UnitsInLayer(), activations.back().cols());
+			for (int i = 0; i < labelOneHot.cols(); ++i)
+				labelOneHot(label_batch[i], i) = real(1.0);
+			// compute delta
+			MatrixType delta = m_cost_derivative(activations.back(), labelOneHot).array() * activationDerivatives.back().array();
+			nabla_b.push_back(delta);
+			nabla_w.push_back(delta * activations[activations.size() - 2].transpose());
+
+			for (size_t i = m_layers.size() - 2; i > 0; --i)
+			{
+				const auto& nextLayer = m_layers[i + 1];
+				auto& layer = m_layers[i];
+				const auto& prevLayer = m_layers[i - 1];
+				delta = nextLayer.getWeights().transpose() * delta;
+				delta = delta.array() * activationDerivatives[i].array();
+				nabla_b.push_back(delta);
+				nabla_w.push_back(delta * activations[i - 1].transpose());
+			}
+		}
+
+		// singlethread version
 		void update_weights(real eta, real lambda, uint32_t batch_size)
 		{
 			for (size_t i = m_layers.size() - 1; i > 0; --i)
@@ -102,10 +151,27 @@ namespace nn
 			}
 		}
 
-		void sgd(uint32_t img_width, uint32_t img_height, 
-			uint32_t batches, uint32_t batch_size, 
+		// multithread version
+		void update_weights(real eta, real lambda, uint32_t batch_size,
+			const std::vector<Layer::MatrixType>& nabla_w,
+			const std::vector<Layer::MatrixType>& nabla_b)
+		{
+			for (size_t i = m_layers.size() - 1; i > 0; --i)
+			{
+				auto& layer = m_layers[i];
+				// regularization
+				if (lambda != real(0.0))
+					layer.getWeights() *= (1.0 - eta * lambda / real(batch_size));
+				layer.getWeights() -= (eta / real(batch_size)) * nabla_w[nabla_w.size() - i];
+				for (int k = 0; k < nabla_b[nabla_b.size() - i].cols(); ++k)
+					layer.getBias() -= (eta / real(batch_size)) * nabla_b[nabla_b.size() - i].col(k);
+			}
+		}
+
+		void sgd(uint32_t img_width, uint32_t img_height,
+			uint32_t batches, uint32_t batch_size,
 			real eta, real lambda,
-			const std::vector<MatrixType>& training_set, 
+			const std::vector<MatrixType>& training_set,
 			const std::vector<uint8_t>& training_labels)
 		{
 			MatrixType image_batch = MatrixType::Zero(img_width * img_height, batch_size);
@@ -125,6 +191,47 @@ namespace nn
 				update_weights(eta, lambda, batch_size);
 			}
 		}
+
+		void psgd(uint32_t img_width, uint32_t img_height,
+			uint32_t batches, uint32_t batch_size,
+			real eta, real lambda,
+			const std::vector<MatrixType>& training_set,
+			const std::vector<uint8_t>& training_labels)
+		{
+			std::mutex weights_mutex;
+			const auto worker_count = std::thread::hardware_concurrency();
+			auto sgd_thread_func = [&](uint32_t threadNo)
+			{
+				MatrixType image_batch = MatrixType::Zero(img_width * img_height, batch_size);
+				std::vector<uint8_t> label_batch(batch_size);
+				const auto batches_per_thread = batches / worker_count;
+				const auto batches_start = threadNo * batches_per_thread;
+				const auto batches_end = std::min(batches_start + batches_per_thread, batches);
+				for (size_t k = batches_start; k < batches_end; k++)
+				{
+					const size_t batch_start = k * batch_size;
+					const size_t batch_end = (k + 1) * batch_size;
+
+					for (size_t i = batch_start; i < batch_end; ++i)
+					{
+						image_batch.col(i - batch_start) = training_set[i];
+						label_batch[i - batch_start] = training_labels[i];
+					}
+					std::vector<MatrixType> activations, activationDerivatives, nablaW, nablaB;
+					feedforward(image_batch, activations, activationDerivatives);
+					backprop(label_batch, activations, activationDerivatives, nablaW, nablaB);
+					update_weights(eta, lambda, batch_size, nablaW, nablaB);
+				}
+			};
+
+			std::vector<std::thread> workers;
+
+			for (size_t i = 0u; i < worker_count; ++i)
+				workers.push_back(std::thread(sgd_thread_func, i));
+			for (size_t i = 0u; i < worker_count; ++i)
+				workers[i].join();	
+		}
+
 
 		evaluate_results evaluate(const std::vector<MatrixType>& inputs, const std::vector<uint8_t>& labels, size_t count = 0)
 		{
