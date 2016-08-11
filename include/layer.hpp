@@ -106,21 +106,22 @@ namespace nn
 			m_z.noalias() = m_weight * input;
 			for (int i = 0; i < m_z.cols(); ++i)
 				m_z.col(i).noalias() += m_bias;
+			
 		}
 		void setActivations(const MatrixType& input) { m_a.noalias() = input; }
 		void computeActivations(const MatrixType& input) 
 		{ 
 			if (m_type == LayerType::kRegular)
-			{
 				m_a.noalias() = input.unaryExpr(m_activation);
-			}
 			else if (m_type == LayerType::kSoftmax)
 			{
 				if (m_a.rows() != input.rows() || m_a.cols() != input.cols())
 					m_a = MatrixType::Zero(input.rows(), input.cols());
+				MatrixType maxCol(m_a.rows(), 1);
 				for (int i = 0; i < input.cols(); ++i)
 				{
-					m_a.col(i).noalias() = input.col(i).unaryExpr(&expf);
+					maxCol.setConstant(input.maxCoeff()); // prevent softmax overflow
+					m_a.col(i).noalias() = (input.col(i) - maxCol).unaryExpr(&expf);
 					m_a.col(i) /= m_a.col(i).sum();
 				}
 			}

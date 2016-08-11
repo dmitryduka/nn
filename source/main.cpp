@@ -5,6 +5,7 @@
 #include <mutex>
 #include <tuple>
 #include <map>
+
 #include "mnist.hpp"
 #include "timing.hpp"
 #include "network.hpp"
@@ -62,8 +63,8 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 25;
-	const uint32_t dataset_size = 10000;
+	const uint32_t epochs = 60;
+	const uint32_t dataset_size = 60000;
 	const uint32_t training_set_size = dataset_size * 0.9;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;

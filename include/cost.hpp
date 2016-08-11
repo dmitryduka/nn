@@ -44,9 +44,11 @@ namespace nn
 		if (output.rows() != truth.rows() || output.cols() != truth.cols())
 			throw std::logic_error("Cost functions require equally sized matrices");
 		const MatrixType one = MatrixType::Ones(truth.rows(), truth.cols());
-		const MatrixType tmp = -truth * output.unaryExpr(&logf) - (one - truth) * ((one - output).unaryExpr(&logf));
-		if (tmp.hasNaN())
-			throw std::runtime_error("NaNs detected");
+		MatrixType tmp = -truth.array() * output.unaryExpr(&logf).array() - (one - truth).array() * ((one - output).unaryExpr(&logf).array());
+		auto& arr = tmp.array();
+		for (int i = 0; i < arr.size(); ++i)
+			if (!std::isfinite(arr(i)))
+				arr(i) = 0.0f;
 		return tmp.sum();
 	}
 	template<>
@@ -54,7 +56,7 @@ namespace nn
 	{
 		if (output.rows() != truth.rows() || output.cols() != truth.cols())
 			throw std::logic_error("Cost functions require equally sized matrices");
-		return output - truth;
+		return (output - truth);
 	}
 #endif
 }
