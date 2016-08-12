@@ -63,9 +63,9 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 10;
+	const uint32_t epochs = 1;
 	const uint32_t dataset_size = 60000;
-	const uint32_t training_set_size = dataset_size * 0.9;
+	const uint32_t training_set_size = 50000;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;
 	{
@@ -94,13 +94,21 @@ int main()
 		evaluate_results result;
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
-			net.psgd(28, 28, batches, batch_size, eta, lambda, training_set, training_labels);
+			net.psgd(28, 28, batches, batch_size, eta, lambda, training_set, training_labels, false);
+			result = net.evaluate(validation_set, validation_labels);
 			graph_epoch.push_back(epoch);
 			graph_acc.push_back(result.accuracy);
+			std::cout << "acc: " << result.accuracy * 100.0f << "%, cost = " << result.cost << " (" << timer.seconds() << " seconds passed)" << std::endl;
 			std::cout << "Epoch " << epoch << " (" << timer.seconds() << " seconds passed)" << std::endl;
 		}
-		result = net.evaluate(validation_set, validation_labels);
-		std::cout << "acc: " << result.accuracy * 100.0f << "%, cost = " << result.cost << " (" << timer.seconds() << " seconds passed)" << std::endl;
+
+		MatrixType grad;
+		for (int i = 0; i < 10; ++i)
+		{
+			net.derive_backprop(i, grad);
+			std::vector<float> img(grad.data(), grad.data() + 28 * 28);
+			plot_image(img, "grad" + to_string(i) + ".png");
+		}
 
 		const bool dump_error_images = false;
 		if (dump_error_images)
@@ -112,12 +120,12 @@ int main()
 			}
 		}
 
-		std::string plotLabel = "eta=" + to_string(eta) + ",lambda=" + to_string(lambda) + ", bs=" + to_string(batch_size);
+		std::string plotLabel = "[" + to_string(netNo) + "] eta=" + to_string(eta) + ",lambda=" + to_string(lambda) + ", bs=" + to_string(batch_size);
 		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
 
 	std::vector<std::tuple<float, float>> params = { 
-		std::make_tuple(0.1f, 0.0f),
+		std::make_tuple(0.1f, 0.0f)
 	};
 
 	std::vector<std::thread> workers;

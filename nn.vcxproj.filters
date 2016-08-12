@@ -53,9 +53,6 @@
     <ClInclude Include="include\mnist.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\python\easy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\python\py_plot.h">
       <Filter>Header Files\python</Filter>
     </ClInclude>

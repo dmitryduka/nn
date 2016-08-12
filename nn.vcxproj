@@ -173,7 +173,6 @@
     <ClInclude Include="include\settings.hpp" />
     <ClInclude Include="include\timing.hpp" />
     <ClInclude Include="include\weight_initialization.hpp" />
-    <ClInclude Include="source\python\easy.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />

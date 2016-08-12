@@ -134,6 +134,31 @@ namespace nn
 			}
 		}
 
+		void derive_backprop(uint8_t image_label, Layer::MatrixType& image_grad)
+		{
+			// make one-hot label out of single uint8_t
+			auto& outputLayer = m_layers.back();
+			MatrixType labelOneHot = MatrixType::Zero(outputLayer.UnitsInLayer(), 1);
+			labelOneHot(image_label, 0) = real(1.0);
+			// compute delta
+			MatrixType input = MatrixType::Zero(28 * 28, 1);
+			for (int i = 0; i < 1; ++i)
+			{
+				MatrixType output = feedforward(input);
+				MatrixType delta = labelOneHot - output;
+
+				for (size_t i = m_layers.size() - 1; i > 0; --i)
+				{
+					auto& prevLayer = m_layers[i - 1];
+					auto& layer = m_layers[i];
+					auto& arr = delta.array();
+					delta = layer.getWeights().transpose() * delta;
+				}
+				input += delta;
+			}
+			image_grad = input;
+		}
+
 		// singlethread version
 		void update_weights(real eta, real lambda, uint32_t batch_size)
 		{
@@ -196,7 +221,8 @@ namespace nn
 			uint32_t batches, uint32_t batch_size,
 			real eta, real lambda,
 			const std::vector<MatrixType>& training_set,
-			const std::vector<uint8_t>& training_labels)
+			const std::vector<uint8_t>& training_labels,
+			bool useLock)
 		{
 			std::mutex weights_mutex;
 			const auto worker_count = std::thread::hardware_concurrency();
@@ -220,7 +246,15 @@ namespace nn
 					std::vector<MatrixType> activations, activationDerivatives, nablaW, nablaB;
 					feedforward(image_batch, activations, activationDerivatives);
 					backprop(label_batch, activations, activationDerivatives, nablaW, nablaB);
-					update_weights(eta, lambda, batch_size, nablaW, nablaB);
+					if (useLock)
+					{
+						std::lock_guard<std::mutex> lock(weights_mutex);
+						update_weights(eta, lambda, batch_size, nablaW, nablaB);
+					}
+					else
+					{
+						update_weights(eta, lambda, batch_size, nablaW, nablaB);
+					}
 				}
 			};
 
