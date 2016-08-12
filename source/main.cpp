@@ -63,7 +63,7 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 1;
+	const uint32_t epochs = 15;
 	const uint32_t dataset_size = 60000;
 	const uint32_t training_set_size = 50000;
 	std::vector<MatrixType> training_set, validation_set;

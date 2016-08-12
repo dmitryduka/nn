@@ -139,16 +139,7 @@ namespace nn
 			// make one-hot label out of single uint8_t
 			auto& outputLayer = m_layers.back();
 			MatrixType labelOneHot = MatrixType::Zero(outputLayer.UnitsInLayer(), 1);
-			labelOneHot(0, 0) = real(0.1);
-			labelOneHot(1, 0) = real(0.1);
-			labelOneHot(2, 0) = real(0.1);
-			labelOneHot(3, 0) = real(0.1);
-			labelOneHot(4, 0) = real(0.1);
-			labelOneHot(5, 0) = real(0.1);
-			labelOneHot(6, 0) = real(0.1);
-			labelOneHot(7, 0) = real(0.1);
-			labelOneHot(8, 0) = real(0.1);
-			labelOneHot(9, 0) = real(0.1);
+			labelOneHot(image_label , 0) = real(1.0);
 			// compute delta
 			MatrixType input = MatrixType::Zero(28 * 28, 1);
 			for (int i = 0; i < 10; ++i)
