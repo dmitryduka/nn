@@ -139,10 +139,19 @@ namespace nn
 			// make one-hot label out of single uint8_t
 			auto& outputLayer = m_layers.back();
 			MatrixType labelOneHot = MatrixType::Zero(outputLayer.UnitsInLayer(), 1);
-			labelOneHot(image_label, 0) = real(1.0);
+			labelOneHot(0, 0) = real(0.1);
+			labelOneHot(1, 0) = real(0.1);
+			labelOneHot(2, 0) = real(0.1);
+			labelOneHot(3, 0) = real(0.1);
+			labelOneHot(4, 0) = real(0.1);
+			labelOneHot(5, 0) = real(0.1);
+			labelOneHot(6, 0) = real(0.1);
+			labelOneHot(7, 0) = real(0.1);
+			labelOneHot(8, 0) = real(0.1);
+			labelOneHot(9, 0) = real(0.1);
 			// compute delta
 			MatrixType input = MatrixType::Zero(28 * 28, 1);
-			for (int i = 0; i < 1; ++i)
+			for (int i = 0; i < 10; ++i)
 			{
 				MatrixType output = feedforward(input);
 				MatrixType delta = labelOneHot - output;
@@ -151,10 +160,14 @@ namespace nn
 				{
 					auto& prevLayer = m_layers[i - 1];
 					auto& layer = m_layers[i];
-					auto& arr = delta.array();
 					delta = layer.getWeights().transpose() * delta;
 				}
+				input *= 0.9f;
 				input += delta;
+				auto& arr = input.array();
+				for (int i = 0; i < arr.size(); ++i)
+					if (arr(i) < 0.0)
+						arr(i) = 0.0f;
 			}
 			image_grad = input;
 		}

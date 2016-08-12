@@ -19,7 +19,7 @@ cdef public void plot(int plotNo, const vector[float]& x, const vector[float]& y
 cdef public void plot_image(const vector[float]& x, const string& fileName):
 	width = math.sqrt(len(x))
 	img = np.reshape(x, (width, width))
-	plt.imshow(img)
+	plt.imshow(img, cmap=plt.cm.Greys)
 	plt.savefig(fileName, bbox_inches='tight')
 
 cdef public void save_plot(float x1, float x2, float y1, float y2, float xtick, float ytick, const string& xAxis, const string& yAxis, const string& fileName):
