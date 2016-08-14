@@ -151,14 +151,12 @@ namespace nn
 				{
 					auto& prevLayer = m_layers[i - 1];
 					auto& layer = m_layers[i];
+					if (i != 0)
+						delta.array() *= layer.getActivationDerivatives().array();
 					delta = layer.getWeights().transpose() * delta;
 				}
 				input *= 0.9f;
 				input += delta;
-				auto& arr = input.array();
-				for (int i = 0; i < arr.size(); ++i)
-					if (arr(i) < 0.0)
-						arr(i) = 0.0f;
 			}
 			image_grad = input;
 		}
@@ -264,9 +262,9 @@ namespace nn
 
 			std::vector<std::thread> workers;
 
-			for (size_t i = 0u; i < worker_count; ++i)
+			for (uint32_t i = 0u; i < worker_count; ++i)
 				workers.push_back(std::thread(sgd_thread_func, i));
-			for (size_t i = 0u; i < worker_count; ++i)
+			for (uint32_t i = 0u; i < worker_count; ++i)
 				workers[i].join();	
 		}
 

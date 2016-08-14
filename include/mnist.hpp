@@ -8,8 +8,14 @@
 
 namespace nn
 {
+	enum LoadSettings
+	{
+		kVectorize = 0x1,
+		kNormalize = 0x2
+	};
+
 	using MatrixType = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
-	std::vector<MatrixType> loadMNISTImages(const std::string& filename, uint32_t maxImages = 0xFFFFFFFF)
+	std::vector<MatrixType> loadMNISTImages(const std::string& filename, LoadSettings settings, uint32_t maxImages = 0xFFFFFFFF)
 	{
 		std::ifstream in(filename, std::ifstream::binary);
 		if (in)
@@ -41,8 +47,13 @@ namespace nn
 				MatrixType image(vectorizedSize, 1);
 					for (size_t j = 0; j < vectorizedSize; ++j)
 						image(j, 0) = real(images[position++]);
-				image /= 255.0;
-				result.push_back(image);
+				if (settings & LoadSettings::kNormalize)
+					image /= 255.0;
+				
+				if (settings & LoadSettings::kVectorize)
+					result.push_back(image);
+				else
+					result.push_back(Eigen::Map<MatrixType>(image.data(), imageHeight, imageWidth));
 			}			
 			return result;
 		}

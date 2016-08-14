@@ -9,6 +9,7 @@
 #include "mnist.hpp"
 #include "timing.hpp"
 #include "network.hpp"
+#include "convolution.hpp"
 #ifdef _DEBUG
 #undef _DEBUG
 #include <Python.h>
@@ -63,34 +64,33 @@ PythonWrapper g_PythonWrapper;
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 15;
+	const uint32_t epochs = 3;
 	const uint32_t dataset_size = 60000;
-	const uint32_t training_set_size = 50000;
+	const uint32_t training_set_size = 55000;
 	std::vector<MatrixType> training_set, validation_set;
 	std::vector<uint8_t> training_labels, validation_labels;
 	{
-		const auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", dataset_size);
+		const auto images = loadMNISTImages("externals/mnist/train-images.idx3-ubyte", LoadSettings(kNormalize | kVectorize), dataset_size);
 		const auto labels = loadMNISTLabels("externals/mnist/train-labels.idx1-ubyte", dataset_size);
 		training_set = std::vector<MatrixType>(images.cbegin(), images.cbegin() + training_set_size);
 		validation_set = std::vector<MatrixType>(images.cbegin() + training_set_size, images.cend());
 		training_labels = std::vector<uint8_t>(labels.cbegin(), labels.cbegin() + training_set_size);
 		validation_labels = std::vector<uint8_t>(labels.cbegin() + training_set_size, labels.cend());
 	}
+
 	network original_net;
 	original_net.addRegularLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
 	original_net.addRegularLayer(LayerType::kRegular, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
 	original_net.addRegularLayer(LayerType::kRegular, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
 	original_net.addRegularLayer(LayerType::kSoftmax, 10, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
 	original_net.setCostFunction(CostType::kCrossEntropy);
-	// RELU - tops at ~84%, eta = 0.05, batch_size = 30, 100 (seems to not matter much)
-	// Sigmoid - tops at ~98%, eta = 2.0, 1.0, 0.5 (<0.96,<0.97,<1.0), batch_size = 10
-	auto trainNet = [&](uint32_t netNo, real eta, real lambda, uint32_t batch_size)
+	auto train_net = [&](uint32_t netNo, real eta, real lambda, uint32_t batch_size)
 	{
 		std::vector<float> graph_epoch, graph_acc;
 		network net = original_net;
 		// SGD
 		timing timer;
-		const size_t batches = training_set.size() / batch_size;
+		const uint32_t batches = uint32_t(training_set.size() / batch_size);
 		evaluate_results result;
 		for (size_t epoch = 0u; epoch < epochs; ++epoch)
 		{
@@ -100,14 +100,6 @@ int main()
 			graph_acc.push_back(result.accuracy);
 			std::cout << "acc: " << result.accuracy * 100.0f << "%, cost = " << result.cost << " (" << timer.seconds() << " seconds passed)" << std::endl;
 			std::cout << "Epoch " << epoch << " (" << timer.seconds() << " seconds passed)" << std::endl;
-		}
-
-		MatrixType grad;
-		for (int i = 0; i < 10; ++i)
-		{
-			net.derive_backprop(i, grad);
-			std::vector<float> img(grad.data(), grad.data() + 28 * 28);
-			plot_image(img, "grad" + to_string(i) + ".png");
 		}
 
 		const bool dump_error_images = false;
@@ -124,30 +116,9 @@ int main()
 		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
 
-	std::vector<std::tuple<float, float>> params = { 
-		std::make_tuple(0.1f, 0.0f)
-	};
-
-	std::vector<std::thread> workers;
-	const uint32_t totalNets = uint32_t(params.size());
-	::initialize_plot(totalNets);
-	for (uint32_t k = 0; k < totalNets; k += std::thread::hardware_concurrency())
-	{
-		const auto threadLimit = std::min(totalNets - k, std::thread::hardware_concurrency());
-		for (size_t i = 0u; i < threadLimit; ++i)
-		{
-			const auto param = params.back();
-			const auto eta = std::get<0>(param);
-			const auto lambda = std::get<1>(param);
-			params.pop_back();
-			workers.push_back(std::thread(trainNet, k + i, eta, lambda, 32));
-		}
-		for (size_t i = 0u; i < threadLimit; ++i)
-			workers[i].join();
-		workers.clear();
-	}
-
-	g_PythonWrapper.save_plot(0.0, epochs, 0.0, 1.0, 1.0, 0.01, "Epochs", "Accuracy", "results.png");
+	::initialize_plot(1);
+	train_net(0, 0.01, 0.0, 32);
+	g_PythonWrapper.save_plot(0.0, epochs - 1, 0.0, 1.0, 1.0, 0.01, "Epochs", "Accuracy", "results.png");
 
 	return 0;
 }

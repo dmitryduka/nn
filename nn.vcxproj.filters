@@ -56,5 +56,8 @@
     <ClInclude Include="include\python\py_plot.h">
       <Filter>Header Files\python</Filter>
     </ClInclude>
+    <ClInclude Include="include\convolution.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
