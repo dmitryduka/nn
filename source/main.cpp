@@ -67,12 +67,12 @@ namespace
 	}
 }
 
-PythonWrapper g_PythonWrapper;
+//PythonWrapper g_PythonWrapper;
 
 int main()
 {
 	using namespace nn;
-	const uint32_t epochs = 3;
+	const uint32_t epochs = 300;
 	const uint32_t dataset_size = 60000;
 	const uint32_t training_set_size = 55000;
 	std::vector<MatrixType> training_set, validation_set;
@@ -121,16 +121,16 @@ int main()
 #endif
 			}
 		}
-
+		eta *= 0.95;
 		std::string plotLabel = "[" + to_string(netNo) + "] eta=" + to_string(eta) + ",lambda=" + to_string(lambda) + ", bs=" + to_string(batch_size);
-		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
+		//g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
 
 #if USE_PYTHON == 1
 	::initialize_plot(1);
 #endif
 	train_net(0, 0.01, 0.0, 32);
-	g_PythonWrapper.save_plot(0.0, epochs - 1, 0.0, 1.0, 1.0, 0.01, "Epochs", "Accuracy", "results.png");
+	//g_PythonWrapper.save_plot(0.0, epochs - 1, 0.0, 1.0, 1.0, 0.01, "Epochs", "Accuracy", "results.png");
 
 	return 0;
 }
