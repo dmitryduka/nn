@@ -10,6 +10,7 @@
 #include "timing.hpp"
 #include "network.hpp"
 #include "convolution.hpp"
+#if USE_PYTHON == 1
 #ifdef _DEBUG
 #undef _DEBUG
 #include <Python.h>
@@ -18,12 +19,14 @@
 #include <Python.h>
 #endif
 #include "python/py_plot.h"
+#endif
 
 namespace
 {
 	struct PythonWrapper
 	{
 		std::mutex m_pythonLock;
+#if USE_PYTHON == 1
 		PythonWrapper()
 		{
 			Py_Initialize();
@@ -31,20 +34,25 @@ namespace
 		}
 		~PythonWrapper() 
 		{ 
-			Py_Finalize(); 
+			Py_Finalize();
 		}
+#endif
 
 		template<typename ... T>
 		void plot(T... t)
 		{
+#if USE_PYTHON == 1
 			std::lock_guard<std::mutex> lock(m_pythonLock);
 			::plot(t...);
+#endif
 		}
 		template<typename ... T>
 		void save_plot(T... t)
 		{
+#if USE_PYTHON == 1
 			std::lock_guard<std::mutex> lock(m_pythonLock);
 			::save_plot(t...);
+#endif
 		}
 	};
 
@@ -79,10 +87,10 @@ int main()
 	}
 
 	network original_net;
-	original_net.addRegularLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
-	original_net.addRegularLayer(LayerType::kRegular, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
-	original_net.addRegularLayer(LayerType::kRegular, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
-	original_net.addRegularLayer(LayerType::kSoftmax, 10, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
+	original_net.addLayer(LayerType::kInput, 28 * 28, ActivationType::kNone, WeightInitializationType::kNone);
+	original_net.addLayer(LayerType::kFC, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+	original_net.addLayer(LayerType::kFC, 256, ActivationType::kLRelu, WeightInitializationType::kWeightedGaussian);
+	original_net.addLayer(LayerType::kSoftmax, 10, ActivationType::kNone, WeightInitializationType::kWeightedGaussian);
 	original_net.setCostFunction(CostType::kCrossEntropy);
 	auto train_net = [&](uint32_t netNo, real eta, real lambda, uint32_t batch_size)
 	{
@@ -108,7 +116,9 @@ int main()
 			for (auto i : result.errors)
 			{
 				std::vector<float> img(validation_set[i].data(), validation_set[i].data() + 28 * 28);
+#if USE_PYTHON == 1
 				plot_image(img, "error" + to_string(i) + ".png");
+#endif
 			}
 		}
 
@@ -116,7 +126,9 @@ int main()
 		g_PythonWrapper.plot(netNo, graph_epoch, graph_acc, plotLabel);
 	};
 
+#if USE_PYTHON == 1
 	::initialize_plot(1);
+#endif
 	train_net(0, 0.01, 0.0, 32);
 	g_PythonWrapper.save_plot(0.0, epochs - 1, 0.0, 1.0, 1.0, 0.01, "Epochs", "Accuracy", "results.png");
 

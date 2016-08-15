@@ -19,7 +19,7 @@ namespace nn
 	public:
 		using Layer = layer;
 
-		Layer& addRegularLayer(LayerType type, uint32_t units, ActivationType activationType, WeightInitializationType weightInitializationType)
+		Layer& addLayer(LayerType type, uint32_t units, ActivationType activationType, WeightInitializationType weightInitializationType)
 		{
 			uint32_t unitsInPreviousLayer = 0;
 			if (!m_layers.empty())

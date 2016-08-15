@@ -6,6 +6,7 @@ namespace nn
 {
 	enum class WeightInitializationType
 	{
+		kNone,
 		kZeros,
 		kGaussian,
 		kWeightedGaussian,

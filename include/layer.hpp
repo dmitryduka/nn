@@ -12,7 +12,7 @@ namespace nn
 	enum class LayerType
 	{
 		kInput,
-		kRegular,
+		kFC,
 		kSoftmax
 	};
 
@@ -111,7 +111,7 @@ namespace nn
 		void setActivations(const MatrixType& input) { m_a.noalias() = input; }
 		void computeActivations(const MatrixType& input) 
 		{ 
-			if (m_type == LayerType::kRegular)
+			if (m_type == LayerType::kFC)
 				m_a.noalias() = input.unaryExpr(m_activation);
 			else if (m_type == LayerType::kSoftmax)
 			{
@@ -128,7 +128,7 @@ namespace nn
 		}
 		void computeActivationDerivatives(const MatrixType& input) 
 		{ 
-			if (m_type == LayerType::kRegular)
+			if (m_type == LayerType::kFC)
 				m_da.noalias() = input.unaryExpr(m_activationDerivative);
 			else if (m_type == LayerType::kSoftmax)
 				m_da = MatrixType::Ones(m_a.rows(), m_a.cols());
@@ -145,7 +145,7 @@ namespace nn
 		MatrixType computeActivationsExplicit(const MatrixType& input)
 		{
 			MatrixType result;
-			if (m_type == LayerType::kRegular)
+			if (m_type == LayerType::kFC)
 				result.noalias() = input.unaryExpr(m_activation);
 			else if (m_type == LayerType::kSoftmax)
 			{
@@ -164,7 +164,7 @@ namespace nn
 		MatrixType computeActivationDerivativesExplicit(const MatrixType& input)
 		{
 			MatrixType result;
-			if (m_type == LayerType::kRegular)
+			if (m_type == LayerType::kFC)
 				result.noalias() = input.unaryExpr(m_activationDerivative);
 			else if (m_type == LayerType::kSoftmax)
 				result = MatrixType::Ones(input.rows(), input.cols());
